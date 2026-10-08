@@ -1,4 +1,4 @@
-# Guildhall – dungeon contracts (proof of concept)
+# Delve Tycoon (proof of concept)
 
 Hire adventurers, send parties into dungeons, resolve fights abstractly (power vs difficulty),
 earn gold / XP / loot / lore, then gear up for harder dungeons. Single-player, no PvP yet.

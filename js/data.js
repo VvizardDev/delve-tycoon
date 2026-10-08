@@ -204,8 +204,8 @@ const DUNGEONS = [
 // cellar_deep and crypt_reading are PLACEHOLDER samples of count-based and class-conditional lore: edit or delete them.
 const LORE = {
   cellar: { title: 'The Stone Terraces', text: 'The humans have built a series of stone terraces tapered to a point. How could simple hunter-gatherers achieve this?' },
-  mine:   { title: 'The Venusian Foe',       text: 'The kin of the humans, the arrogant Pleiadeans, are the ringleaders of the rebellion.' },
-  crypt:  { title: 'Ash Does Not Rest',   text: 'The ash-priests burned their dead standing up, so they could never lie down again.' },
+  mine:   { title: 'The Venusian Foe',       text: 'The kin of the humans, the arrogant Pleiadeans, are the ringleaders of the human rebellion.' },
+  crypt:  { title: 'The Granite Causeway',   text: 'The reptilians built this road across the entire ocean to transport mined resources to take off planet. Now it is a hub of their foul rebellion.' },
   cellar_deep:    { title: "Tall Whites?", text: 'Torture and interrogations tell us the slave rebellion is not being lead by the Hunter Gatherers...' },
   crypt_reading:  { title: 'The Serpent\'s betrayal', hint: 'It takes a snake to know a snake.', text: 'The Annunaki known as The Serpent has betrayed his race and sided with the Ultimate Monstrosity. Perhaps he seeks to rule Earth.' },
   spire:  { title: 'The Supreme Monstrosity', text: 'The Reptilian\'s living god perishes before you, only to regenerate. His eternal hunger infects your very DNA. It seems only The Dryas may defeat it.' },

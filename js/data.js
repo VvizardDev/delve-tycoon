@@ -12,10 +12,10 @@
    Sentences are in TERMS.phrases below. Trait / stat / class descriptions in this file may also use {placeholders} (e.g. {party}, {hp}, {might}).
    =========================================================== */
 const TERMS = {
-  game: 'Guildhall', gold: 'Gold', goldIcon: '🪙', hp: 'HP', xp: 'XP',
-  dungeon: 'dungeon', dungeons: 'dungeons', room: 'room', rooms: 'rooms',
-  adventurer: 'adventurer', adventurers: 'adventurers', party: 'party', team: 'team',
-  guild: 'guild', tavern: 'tavern', roster: 'roster', armory: 'armory', codex: 'codex', missions: 'missions',
+  game: 'Delve Tycoon', gold: 'Genecreds', goldIcon: '🪙', hp: 'HP', xp: 'XP',
+  dungeon: 'deployment', dungeons: 'deployments', room: 'stage', rooms: 'stages',
+  adventurer: 'operative', adventurers: 'operatives', party: 'squad', team: 'team',
+  guild: 'HQ', tavern: 'gene vats', roster: 'roster', armory: 'armory', codex: 'codex', missions: 'missions',
   expedition: 'expedition', expeditions: 'expeditions', battleReport: 'battle report', battleReports: 'battle reports', log: 'log',
   loyalty: 'loyalty', trait: 'trait', traits: 'traits', lore: 'lore',
   help: '? Help', close: 'Close', saveData: 'Save data', resetSave: 'Reset save', compactView: 'Compact view', detailView: 'Detailed view', items: 'items',
@@ -100,13 +100,13 @@ const STATS = {
    hideTendencies : true = tavern shows only the blurb (used by the goon).
    blurb       : one line of tavern text. */
 const CLASSES = {
-  warrior: { name: 'Warrior', emoji: '🪖', cost: 50, maxTraits: 1, traitBias: { brawler: 2, stalwart: 2, bulwark: 2, hale: 2 }, roll: { might: [4, 6], agility: [1, 3], insight: [0, 2], presence: [1, 3], fortitude: [5, 7] }, grow: { might: 2, agility: 0, insight: 0, presence: 1, fortitude: 2 }, blurb: 'Hits hard and soaks damage.' },
-  rogue:   { name: 'Rogue', emoji: '🥷', cost: 60, maxTraits: 1, traitBias: { nimble: 2, keen: 2, duelist: 2, lucky_find: 2, second_wind: 2 }, roll: { might: [2, 4], agility: [5, 7], insight: [1, 3], presence: [0, 2], fortitude: [2, 4] }, grow: { might: 1, agility: 2, insight: 1, presence: 0, fortitude: 1 }, blurb: 'Quick, sneaky and lucky with loot.' },
-  mage:    { name: 'Mage', emoji: '🧙', cost: 70, maxTraits: 1, traitBias: { sharp_eyed: 2, keen: 2, boss_slayer: 2, quick_study: 2 }, roll: { might: [0, 2], agility: [1, 3], insight: [6, 8], presence: [2, 4], fortitude: [1, 3] }, grow: { might: 0, agility: 1, insight: 3, presence: 1, fortitude: 1 }, blurb: 'Brilliant but fragile.' },
-  cleric:  { name: 'Cleric', emoji: '🕯️', cost: 60, maxTraits: 1, traitBias: { commanding: 2, medic: 2, iron_will: 2, loyal_heart: 2, last_breath: 2 }, roll: { might: [1, 3], agility: [0, 2], insight: [2, 4], presence: [5, 7], fortitude: [3, 5] }, grow: { might: 1, agility: 0, insight: 1, presence: 2, fortitude: 1 }, blurb: 'Steadfast and inspiring.' },
+  warrior: { name: 'Nephilim', emoji: '🪖', cost: 50, maxTraits: 1, traitBias: { brawler: 2, stalwart: 2, bulwark: 2, hale: 2 }, roll: { might: [4, 6], agility: [1, 3], insight: [0, 2], presence: [1, 3], fortitude: [5, 7] }, grow: { might: 2, agility: 0, insight: 0, presence: 1, fortitude: 2 }, blurb: 'Born to serve.' },
+  rogue:   { name: 'Pleiadean', emoji: '🥷', cost: 60, maxTraits: 1, unlock: { clears: { mine: 1 } }, traitBias: { nimble: 2, keen: 2, duelist: 2, lucky_find: 2, second_wind: 2 }, roll: { might: [2, 4], agility: [5, 7], insight: [1, 3], presence: [0, 2], fortitude: [2, 4] }, grow: { might: 1, agility: 2, insight: 1, presence: 0, fortitude: 1 }, blurb: 'Humoid. Raid their base to access.' },
+  mage:    { name: 'Grey', emoji: '👽', cost: 70, maxTraits: 1, traitBias: { sharp_eyed: 2, keen: 2, boss_slayer: 2, quick_study: 2 }, roll: { might: [0, 2], agility: [1, 3], insight: [6, 8], presence: [2, 4], fortitude: [1, 3] }, grow: { might: 0, agility: 1, insight: 3, presence: 1, fortitude: 1 }, blurb: 'Brilliant but fragile.' },
+  cleric:  { name: 'Reptoid', emoji: '🕯️', cost: 60, maxTraits: 1, unlock: { clears: { crypt: 1 } }, traitBias: { commanding: 2, medic: 2, iron_will: 2, loyal_heart: 2, last_breath: 2 }, roll: { might: [1, 3], agility: [0, 2], insight: [2, 4], presence: [5, 7], fortitude: [3, 5] }, grow: { might: 1, agility: 0, insight: 1, presence: 2, fortitude: 1 }, blurb: 'Brutish beast, mindless enforcers.' },
   goon:    { name: 'Goon', emoji: '👤', cost: 0, maxLoyalty: 1, maxTraits: 0, hideTendencies: true, roll: { might: [1, 2], agility: [1, 2], insight: [0, 1], presence: [0, 1], fortitude: [1, 2] }, grow: { might: 1, agility: 0, insight: 0, presence: 0, fortitude: 1 }, blurb: 'Free, weak and expendable: 1 {loyalty}, no restoring. Your safety net.' },
   // ---- SAMPLE classes to show the new systems (placeholders: edit or delete) ----
-  ranger:  { name: 'Ranger', emoji: '🧭', cost: 65, maxTraits: 1, unlock: { clears: { cellar: 1 } }, traitBias: { nimble: 2, keen: 2, scavenger: 2 }, roll: { might: [2, 4], agility: [4, 6], insight: [2, 4], presence: [1, 3], fortitude: [3, 5] }, grow: { might: 1, agility: 2, insight: 1, presence: 0, fortitude: 1 }, blurb: 'Scout and trapper. Unlocks after your first {dungeon} clear.' },
+  ranger:  { name: 'Ranger', emoji: '🧭', cost: 65, maxTraits: 1, hidden:true, unlock: { clears: { cellar: 1 } }, traitBias: { nimble: 2, keen: 2, scavenger: 2 }, roll: { might: [2, 4], agility: [4, 6], insight: [2, 4], presence: [1, 3], fortitude: [3, 5] }, grow: { might: 1, agility: 2, insight: 1, presence: 0, fortitude: 1 }, blurb: 'Scout and trapper. Unlocks after your first {dungeon} clear.' },
   bard:    { name: 'Bard', emoji: '🎻', cost: 60, maxTraits: 1, hidden: true, schedule: { days: [5, 6, 0] }, traitBias: { commanding: 2, silver_tongue: 2 }, roll: { might: [0, 2], agility: [2, 4], insight: [2, 4], presence: [5, 7], fortitude: [2, 4] }, grow: { might: 0, agility: 1, insight: 1, presence: 2, fortitude: 1 }, blurb: 'Weekend visitor (Fri-Sun). Inspiring and well paid.' },
 };
 
@@ -170,13 +170,13 @@ const NAMES = ['Brann','Isolde','Kest','Mira','Torv','Vale','Edda','Rook','Sable
 
 // Items. slot: weapon | armor | trinket. bonus: stats added while equipped (use any STATS keys).
 const ITEMS = {
-  rusty_sword:   { name: 'Rusty Sword',    slot: 'weapon',  bonus: { might: 3 } },
-  oak_staff:     { name: 'Oak Staff',      slot: 'weapon',  bonus: { insight: 4 } },
+  rusty_sword:   { name: 'Nuraghic Bolt',    slot: 'weapon',  bonus: { might: 3 } },
+  oak_staff:     { name: 'Psionic Headband',      slot: 'weapon',  bonus: { insight: 4 } },
   moon_blade:    { name: 'Moonlit Blade',  slot: 'weapon',  bonus: { might: 8, agility: 3 } },
-  leather_vest:  { name: 'Leather Vest',   slot: 'armor',   bonus: { fortitude: 3 } },
-  bone_mail:     { name: 'Bone Mail',      slot: 'armor',   bonus: { fortitude: 8 } },
-  lucky_coin:    { name: 'Lucky Coin',     slot: 'trinket', bonus: { agility: 2, presence: 2 } },
-  crypt_signet:  { name: 'Crypt Signet',   slot: 'trinket', bonus: { might: 2, insight: 2, presence: 2, fortitude: 2 } },
+  leather_vest:  { name: 'Venusian Polymer',   slot: 'armor',   bonus: { fortitude: 3 } },
+  bone_mail:     { name: 'Dogu Vest',      slot: 'armor',   bonus: { fortitude: 8 } },
+  lucky_coin:    { name: 'Baghdad Battery',     slot: 'trinket', bonus: { agility: 2, presence: 2 } },
+  crypt_signet:  { name: 'Annunaki Signet',   slot: 'trinket', bonus: { might: 2, insight: 2, presence: 2, fortitude: 2 } },
 };
 
 /* Dungeons.
@@ -194,21 +194,21 @@ const ITEMS = {
    hidden     : true = not shown at all until unlocked (default: shown locked with its requirements)
    traitReward: null, or a TRAITS id granted to every party member on ANY clear (if they lack it). Leave null for most dungeons. */
 const DUNGEONS = [
-  { id: 'cellar', emoji: '💧',  name: 'Flooded Cellar',   difficulty: 15, damage: 6,  duration: 10, gold: [20, 40],   xp: 15,  loot: [['rusty_sword', .4], ['leather_vest', .4]], loreRewards: [{ id: 'cellar', clears: 1 }, { id: 'cellar_deep', clears: 3 }], unlock: null, hidden: false, traitReward: null },
-  { id: 'mine', emoji: '⛏️',    name: 'Abandoned Mine',   difficulty: 40, damage: 12,  duration: 20, gold: [50, 90],   xp: 35,  loot: [['oak_staff', .35], ['lucky_coin', .3]],   loreRewards: [{ id: 'mine', clears: 1 }], unlock: null, hidden: false, traitReward: null },
-  { id: 'crypt', emoji: '⚰️',   name: 'Crypt of Ash',     difficulty: 90, damage: 18,  duration: 40, gold: [120, 200], xp: 80,  loot: [['bone_mail', .35], ['crypt_signet', .15]], loreRewards: [{ id: 'crypt', clears: 1 }, { id: 'crypt_reading', clears: 1, requires: { class: 'cleric' } }], unlock: null, hidden: false, traitReward: null },
-  { id: 'spire', emoji: '🗼',   name: 'The Hollow Spire', difficulty: 200, damage: 21, duration: 80, gold: [300, 500], xp: 180, loot: [['moon_blade', .25]],                      loreRewards: [{ id: 'spire', clears: 1 }], unlock: null, hidden: false, traitReward: 'hungers_mark' },
+  { id: 'cellar', emoji: '💧',  name: 'Gunung Padang',   difficulty: 15, damage: 6,  duration: 10, gold: [20, 40],   xp: 15,  loot: [['rusty_sword', .4], ['leather_vest', .4]], loreRewards: [{ id: 'cellar', clears: 1 }, { id: 'cellar_deep', clears: 3 }], unlock: null, hidden: false, traitReward: null },
+  { id: 'mine', emoji: '⛏️',    name: 'Gobekli Tepe',   difficulty: 40, damage: 12,  duration: 20, gold: [50, 90],   xp: 35,  loot: [['oak_staff', .35], ['lucky_coin', .3]],   loreRewards: [{ id: 'mine', clears: 1 }], unlock: null, hidden: false, traitReward: null },
+  { id: 'crypt', emoji: '⚰️',   name: 'Bimini Road',     difficulty: 90, damage: 18,  duration: 40, gold: [120, 200], xp: 80,  loot: [['bone_mail', .35], ['crypt_signet', .15]], loreRewards: [{ id: 'crypt', clears: 1 }, { id: 'crypt_reading', clears: 1, requires: { class: 'cleric' } }], unlock: null, hidden: false, traitReward: null },
+  { id: 'spire', emoji: '🗼',   name: 'Cholula Pyramid', difficulty: 200, damage: 21, duration: 80, gold: [300, 500], xp: 180, loot: [['moon_blade', .25]],                      loreRewards: [{ id: 'spire', clears: 1 }], unlock: null, hidden: false, traitReward: 'hungers_mark' },
 ];
 
 // Lore entries. hint = text shown while locked (default is generated from the unlock rule); secret:true shows ??? instead.
 // cellar_deep and crypt_reading are PLACEHOLDER samples of count-based and class-conditional lore: edit or delete them.
 const LORE = {
-  cellar: { title: 'The Drowned Vintner', text: 'The inn above once sold the best wine in the valley, until the cellar began to weep.' },
-  mine:   { title: 'Seam Thirteen',       text: 'Miners stopped counting past twelve. Seam thirteen was not on any map.' },
+  cellar: { title: 'The Stone Terraces', text: 'The humans have built a series of stone terraces tapered to a point. How could simple hunter-gatherers achieve this?' },
+  mine:   { title: 'The Venusian Foe',       text: 'The kin of the humans, the arrogant Pleiadeans, are the ringleaders of the rebellion.' },
   crypt:  { title: 'Ash Does Not Rest',   text: 'The ash-priests burned their dead standing up, so they could never lie down again.' },
-  cellar_deep:    { title: "The Vintner's Ledger", text: 'Every bottle sold was logged. The last entry reads: paid in full, with interest.' },
-  crypt_reading:  { title: 'A Cleric\'s Reading', hint: 'Something here answers only to the faithful.', text: 'The ash-priests prayed in reverse. Only a true cleric would recognise the words for what they are.' },
-  spire:  { title: 'What the Spire Hollowed', text: 'Nothing is inside the Spire. That is the problem: it is hungry for something.' },
+  cellar_deep:    { title: "Tall Whites?", text: 'Torture and interrogations tell us the slave rebellion is not being lead by the Hunter Gatherers...' },
+  crypt_reading:  { title: 'The Serpent\'s betrayal', hint: 'It takes a snake to know a snake.', text: 'The Annunaki known as The Serpent has betrayed his race and sided with the Ultimate Monstrosity. Perhaps he seeks to rule Earth.' },
+  spire:  { title: 'The Supreme Monstrosity', text: 'The Reptilian\'s living god perishes before you, only to regenerate. His eternal hunger infects your very DNA. It seems only The Dryas may defeat it.' },
 };
 
 // Tuning constants. (Balance knobs; see README "Stats" for how each is used.)
@@ -247,10 +247,10 @@ const CONFIG = {
    BEAT_TEXT.attack[stat]: random action lines for the hero who handles a room.
    =========================================================== */
 const DUNGEON_ROOMS = {
-  cellar: [{ name: 'a swarm of cellar rats', test: 'agility' }, { name: 'a waterlogged guard', test: 'might' }, { name: 'the Drowned Vintner (boss)', test: 'presence' }],
-  mine:   [{ name: 'a rockfall trap', test: 'insight' }, { name: 'blind tunnel crawlers', test: 'agility' }, { name: 'a rogue ore-golem', test: 'might' }, { name: 'the Thing in Seam Thirteen (boss)', test: 'presence' }],
-  crypt:  [{ name: 'restless skeletons', test: 'might' }, { name: 'an ash wraith', test: 'presence' }, { name: 'a poison miasma', test: 'fortitude' }, { name: 'the Ash Priest (boss)', test: 'insight' }],
-  spire:  [{ name: 'mirror shades', test: 'insight' }, { name: 'a hollow knight', test: 'might' }, { name: 'a screaming gargoyle', test: 'presence' }, { name: 'the shifting stair', test: 'agility' }, { name: 'The Hunger (boss)', test: 'fortitude' }],
+  cellar: [{ name: 'jungle fighting', test: 'might' }, { name: 'waterlogged tunnel', test: 'might' }, { name: 'ascend the pyramid', test: 'might' }],
+  mine:   [{ name: 'human guards', test: 'might' }, { name: 'blind tunnel assault', test: 'agility' }, { name: 'blonde warriors', test: 'might' }, { name: 'the Valiant defender', test: 'presence' }],
+  crypt:  [{ name: 'reptoid mob', test: 'might' }, { name: 'endless granite blocks', test: 'agility' }, { name: 'tropical squall', test: 'fortitude' }, { name: 'reptoid overseer', test: 'insight' }],
+  spire:  [{ name: 'hieroglyph doors', test: 'insight' }, { name: 'the sacrificing chambers', test: 'might' }, { name: 'primal fear', test: 'presence' }, { name: 'the dart trap', test: 'agility' }, { name: 'The Supreme Monstrosity', test: 'fortitude' }],
 };
 const BEAT_TEXT = {
   attack: {

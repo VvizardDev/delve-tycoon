@@ -19,7 +19,7 @@ const TERMS = {
   expedition: 'expedition', expeditions: 'expeditions', battleReport: 'battle report', battleReports: 'battle reports', log: 'log',
   loyalty: 'loyalty', trait: 'trait', traits: 'traits', lore: 'lore',
   help: '? Help', close: 'Close', saveData: 'Save data', resetSave: 'Reset save', compactView: 'Compact view', detailView: 'Detailed view', items: 'items',
-  attempt: 'attempt', attempts: 'attempts', lastParty: 'last party',
+  attempt: 'attempt', attempts: 'attempts', lastParty: 'select last party',
   days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],   // day labels, index 0 = Sunday (used by class schedules)
   hire: 'hire', hired: 'hired', release: 'release', send: 'send', restore: 'restore', clearOdds: 'clear odds',
 
@@ -79,7 +79,7 @@ const STATS = {
   might:     { emoji: '⚔️', abbr: 'MIT', name: 'Might',     role: 'Passes brute-force {rooms} (monsters, rockfalls, doors).' },
   agility:   { emoji: '🏹', abbr: 'AGI', name: 'Agility',   role: 'Passes trap, stealth and speed {rooms}. Also raises item drop chance.' },
   insight:   { emoji: '🧠', abbr: 'INS', name: 'Insight',   role: 'Passes puzzle, ward and hidden-danger {rooms}. Also raises {xp} earned.' },
-  presence:  { emoji: '✨', abbr: 'PRE', name: 'Presence',  role: 'Passes fear, curse and holy/unholy {rooms}. Also raises {gold} earned.' },
+  presence:  { emoji: '✨', abbr: 'PRE', name: 'Presence',  role: 'Passes fear, curse and unholy {rooms}. Also raises {gold} earned.' },
   fortitude: { emoji: '🛡️', abbr: 'FOR', name: 'Fortitude', role: 'Adds to the {party} {hp} pool that every {attempt} drains. Also passes poison/heat {rooms}.' },
 };
 
@@ -100,8 +100,8 @@ const STATS = {
    hideTendencies : true = tavern shows only the blurb (used by the goon).
    blurb       : one line of tavern text. */
 const CLASSES = {
-  warrior: { name: 'Nephilim', emoji: '🪖', cost: 50, maxTraits: 1, traitBias: { brawler: 2, stalwart: 2, bulwark: 2, hale: 2 }, roll: { might: [4, 6], agility: [1, 3], insight: [0, 2], presence: [1, 3], fortitude: [5, 7] }, grow: { might: 2, agility: 0, insight: 0, presence: 1, fortitude: 2 }, blurb: 'Born to serve.' },
-  rogue:   { name: 'Pleiadean', emoji: '🥷', cost: 60, maxTraits: 1, unlock: { clears: { mine: 1 } }, traitBias: { nimble: 2, keen: 2, duelist: 2, lucky_find: 2, second_wind: 2 }, roll: { might: [2, 4], agility: [5, 7], insight: [1, 3], presence: [0, 2], fortitude: [2, 4] }, grow: { might: 1, agility: 2, insight: 1, presence: 0, fortitude: 1 }, blurb: 'Humoid. Raid their base to access.' },
+  warrior: { name: 'Nephilim', emoji: '🪖', cost: 50, maxTraits: 1, traitBias: { brawler: 2, stalwart: 2, bulwark: 2, hale: 2 }, roll: { might: [4, 6], agility: [1, 3], insight: [0, 2], presence: [1, 3], fortitude: [5, 7] }, grow: { might: 2, agility: 0, insight: 0, presence: 1, fortitude: 2 }, blurb: 'Vat-born and amenesia-conditioned super soliders. Born to serve The Demiurge.' },
+  rogue:   { name: 'Pleiadean', emoji: '🥷', cost: 60, maxTraits: 1, unlock: { clears: { mine: 1 } }, traitBias: { nimble: 2, keen: 2, duelist: 2, lucky_find: 2, second_wind: 2 }, roll: { might: [2, 4], agility: [5, 7], insight: [1, 3], presence: [0, 2], fortitude: [2, 4] }, grow: { might: 1, agility: 2, insight: 1, presence: 0, fortitude: 1 }, blurb: 'Humoid. Inferior genetics but agile.' },
   mage:    { name: 'Grey', emoji: '👽', cost: 70, maxTraits: 1, traitBias: { sharp_eyed: 2, keen: 2, boss_slayer: 2, quick_study: 2 }, roll: { might: [0, 2], agility: [1, 3], insight: [6, 8], presence: [2, 4], fortitude: [1, 3] }, grow: { might: 0, agility: 1, insight: 3, presence: 1, fortitude: 1 }, blurb: 'Brilliant but fragile.' },
   cleric:  { name: 'Reptoid', emoji: '🕯️', cost: 60, maxTraits: 1, unlock: { clears: { crypt: 1 } }, traitBias: { commanding: 2, medic: 2, iron_will: 2, loyal_heart: 2, last_breath: 2 }, roll: { might: [1, 3], agility: [0, 2], insight: [2, 4], presence: [5, 7], fortitude: [3, 5] }, grow: { might: 1, agility: 0, insight: 1, presence: 2, fortitude: 1 }, blurb: 'Brutish beast, mindless enforcers.' },
   goon:    { name: 'Goon', emoji: '👤', cost: 0, maxLoyalty: 1, maxTraits: 0, hideTendencies: true, roll: { might: [1, 2], agility: [1, 2], insight: [0, 1], presence: [0, 1], fortitude: [1, 2] }, grow: { might: 1, agility: 0, insight: 0, presence: 0, fortitude: 1 }, blurb: 'Free, weak and expendable: 1 {loyalty}, no restoring. Your safety net.' },
@@ -166,7 +166,7 @@ const TRAITS = {
 const SLOTS = { weapon: { emoji: '🗡️', name: 'Weapon' }, armor: { emoji: '🦺', name: 'Armor' }, trinket: { emoji: '💍', name: 'Trinket' } };
 
 // Random names for hires.
-const NAMES = ['Brann','Isolde','Kest','Mira','Torv','Vale','Edda','Rook','Sable','Ulf','Wren','Zara'];
+const NAMES = ['Litu','Gargarel','Belvitas','Ongu','Ween','Fugga','Klueto','Chef','Neil T Seil','Benny Walks','Ziltaroth','Urgon'];
 
 // Items. slot: weapon | armor | trinket. bonus: stats added while equipped (use any STATS keys).
 const ITEMS = {
@@ -196,8 +196,8 @@ const ITEMS = {
 const DUNGEONS = [
   { id: 'cellar', emoji: '💧',  name: 'Gunung Padang',   difficulty: 15, damage: 6,  duration: 10, gold: [20, 40],   xp: 15,  loot: [['rusty_sword', .4], ['leather_vest', .4]], loreRewards: [{ id: 'cellar', clears: 1 }, { id: 'cellar_deep', clears: 3 }], unlock: null, hidden: false, traitReward: null },
   { id: 'mine', emoji: '⛏️',    name: 'Gobekli Tepe',   difficulty: 40, damage: 12,  duration: 20, gold: [50, 90],   xp: 35,  loot: [['oak_staff', .35], ['lucky_coin', .3]],   loreRewards: [{ id: 'mine', clears: 1 }], unlock: null, hidden: false, traitReward: null },
-  { id: 'crypt', emoji: '⚰️',   name: 'Bimini Road',     difficulty: 90, damage: 18,  duration: 40, gold: [120, 200], xp: 80,  loot: [['bone_mail', .35], ['crypt_signet', .15]], loreRewards: [{ id: 'crypt', clears: 1 }, { id: 'crypt_reading', clears: 1, requires: { class: 'cleric' } }], unlock: null, hidden: false, traitReward: null },
-  { id: 'spire', emoji: '🗼',   name: 'Cholula Pyramid', difficulty: 200, damage: 21, duration: 80, gold: [300, 500], xp: 180, loot: [['moon_blade', .25]],                      loreRewards: [{ id: 'spire', clears: 1 }], unlock: null, hidden: false, traitReward: 'hungers_mark' },
+  { id: 'crypt', emoji: '🛣️️',   name: 'Bimini Road',     difficulty: 90, damage: 18,  duration: 40, gold: [120, 200], xp: 80,  loot: [['bone_mail', .35], ['crypt_signet', .15]], loreRewards: [{ id: 'crypt', clears: 1 }, { id: 'crypt_reading', clears: 1, requires: { class: 'cleric' } }], unlock: null, hidden: false, traitReward: null },
+  { id: 'spire', emoji: '🛕',   name: 'Cholula Pyramid', difficulty: 200, damage: 21, duration: 80, gold: [300, 500], xp: 180, loot: [['moon_blade', .25]],                      loreRewards: [{ id: 'spire', clears: 1 }], unlock: null, hidden: false, traitReward: 'hungers_mark' },
 ];
 
 // Lore entries. hint = text shown while locked (default is generated from the unlock rule); secret:true shows ??? instead.

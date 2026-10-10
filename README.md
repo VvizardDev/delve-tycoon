@@ -1,4 +1,4 @@
-# Delve Tycoon (proof of concept)
+# Guildhall – dungeon contracts (proof of concept)
 
 Hire adventurers, send parties into dungeons, resolve fights abstractly (power vs difficulty),
 earn gold / XP / loot / lore, then gear up for harder dungeons. Single-player, no PvP yet.
@@ -48,10 +48,13 @@ Besides stat/economy effects, traits can change how a run plays, but only throug
 - The header (gold, run progress, help) is sticky: it stays visible while scrolling. The roster party bar sticks just below it. Height variable: `--topbar-h` in style.css.
 - **Last party** button (Missions tab, next to the party hint) re-selects whoever you last sent who is idle and still in the roster (`state.lastParty`).
 
-## Panels, compact roster, run bar
-- Tavern, Roster, Battle reports, Log, and the two Codex pages have a collapse button on their heading (saved in `state.prefs.collapsed`). Add one to any panel with `head('key', title)` in game.js.
-- Roster: **Compact view / Detailed view** switches every card; the arrow on a card overrides it for that adventurer (`prefs.compact`, `prefs.cardOpen`). Compact = one streamlined row (portrait, name, class, level, HP, loyalty pips, traits, party tick).
-- The top bar shows every running expedition (faces, name, %, seconds left) from any tab (`renderRunbar`); clicking it opens Missions.
+## Roster, hiring pop-up, sorting, themes
+- **Roster tiles (default)**: each adventurer is a square tile (portrait, name, level, class, loyalty pips). **Tap a tile to add/remove them from the party** (check mark, highlighted border); the **ⓘ** button opens a details pop-up with the full card (stats, traits, equipment, restore, release). A small `!` marks a pending trait choice. **List view** (button in the roster tools) shows full cards, each collapsible with its arrow. Saved in `prefs.view` ('tiles' | 'list').
+- **Sorting**: the Sort dropdown (hire order, level, class, name, loyalty, team HP contribution, idle first, or any stat) plus a direction button (`prefs.sort`, `prefs.sortDesc`; code: `sortedRoster()`). Numbers sort high-first by default, text A-Z.
+- **Hiring** is a pop-up: tap **＋ Hire** in the roster tools (or the dashed ＋ tile). It lists class cards (locked / scheduled ones show why), the buy-a-slot button, and choosing a class opens the hire-draft pop-up (`tavernHtml`, `renderTavernDlg`).
+- **Theme**: there is no in-game toggle (removed to reduce clutter). `CONFIG.theme` in data.js picks `'dark'` (default), `'light'` or `'auto'` (follow the device). Both palettes are token sets at the top of style.css (`:root` = dark, `:root[data-theme="light"]` = light). To bring a button back, add a header button that flips `document.documentElement.dataset.theme`.
+- **Pop-ups open scrolled to the top** (`showDlg()` in game.js resets the scroll and each pop-up heading is autofocused).
+- Panels with a collapse arrow: Roster, Battle reports, Log, Codex pages (`prefs.collapsed`). The top-bar run progress is described above.
 
 ## Codex discoveries
 Traits and items are recorded in `state.seen` the first time they appear (shown in the hire pop-up, offered at a milestone, granted, or found as loot) via `markSeen()`. The Codex tab has Lore, Traits and Items pages: unseen entries show ???, seen ones show description, and items show which dungeons drop them. The mission pop-up announces new entries. Saves from before this feature are backfilled from current adventurers and inventory.

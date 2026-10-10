@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Delve Tycoon</title>
+<title>Guildhall – Dungeon Contracts</title>
 <!-- Optional web font; the CSS falls back to system fonts if offline. -->
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="top">
-  <h1 data-term="game">Delve Tycoon</h1>
+  <h1 data-term="game">Guildhall</h1>
   <div id="gold" class="goldchip"></div>
   <button id="runbar" class="runbarbtn" data-action="tab" data-tab="missions" aria-label="Expeditions"></button>
   <button data-action="help" class="ghost" data-term="help">? Help</button>
@@ -27,7 +27,6 @@
 <main>
   <!-- Each <section id> is filled by a renderX() function in js/game.js. Move a section between views to rearrange. -->
   <div class="view" data-view="guild">
-    <section id="tavern"></section>
     <section id="roster"></section>
   </div>
   <div class="view" data-view="missions">
@@ -47,6 +46,8 @@
   </div>
 </main>
 
+<dialog id="tavernDlg"><div id="tavernBody"></div></dialog>
+<dialog id="detail"><div id="detailBody"></div></dialog>
 <dialog id="result"><div id="resultBody"></div></dialog>
 <dialog id="draft"><div id="draftBody"></div></dialog>
 <dialog id="help"><div id="helpBody"></div><form method="dialog"><button data-term="close">Close</button></form></dialog>

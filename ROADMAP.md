@@ -20,8 +20,10 @@
 
 - Classes as data (display names, unlock rules, weekday schedules, sample classes), bought roster slots with rising prices, locked top bar, Last party button, multiple faces per class, wide lore art
 
+- Tile roster (tap to select, details pop-up), sorting, hiring as a pop-up, light theme palette (no toggle button for now; set CONFIG.theme), pop-ups open at the top
+
 ## Planned (suggested order)
-0. **Roster/hire UI smoothing** (see chat notes): sorting/filters, saved squads, restore-all, bulk release
+0. **Roster follow-ups**: saved squads, restore-all, bulk release, hire comparison vs your current best
 0b. **Server-driven class schedule** (Supabase clock + enforced hire)
 1. **Economy**: gold is still too easy; roster slots are now a sink; consider scaling hire/restore costs, item shop, dungeon currencies
 2. **Content**: write the real lore chains, extra dungeons with unlock rules, and more trait-reward dungeons (infrastructure exists)

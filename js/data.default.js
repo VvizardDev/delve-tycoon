@@ -18,7 +18,7 @@ const TERMS = {
   guild: 'guild', tavern: 'tavern', roster: 'roster', armory: 'armory', codex: 'codex', missions: 'missions',
   expedition: 'expedition', expeditions: 'expeditions', battleReport: 'battle report', battleReports: 'battle reports', log: 'log',
   loyalty: 'loyalty', trait: 'trait', traits: 'traits', lore: 'lore',
-  help: '? Help', close: 'Close', saveData: 'Save data', resetSave: 'Reset save', compactView: 'Compact view', detailView: 'Detailed view', items: 'items',
+  help: '? Help', close: 'Close', saveData: 'Save data', resetSave: 'Reset save', items: 'items',
   attempt: 'attempt', attempts: 'attempts', lastParty: 'last party',
   days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],   // day labels, index 0 = Sunday (used by class schedules)
   hire: 'hire', hired: 'hired', release: 'release', send: 'send', restore: 'restore', clearOdds: 'clear odds',
@@ -53,7 +53,8 @@ const TERMS = {
     rosterFull: `{Roster} full`, hireBtn: `{Hire}… {cost}{goldIcon}`, hireFree: `{Hire}… free`,
     rosterEmpty: `Your {roster} is empty. Visit the {tavern}.`, partySel: `Selected {party}: {n}/{max} · ❤️ <b>{hpv} {team} {hp}</b>`, partyHint: `Tick "{Party}" on {adventurers} to form a {party} and see its {team} {hp}.`,
     addsHp: `adds ❤️ {n} {team} {hp}`, level: `Lv {n}`, away: `AWAY`, noTraits: `No {traits}`, atRisk: `at risk`, remove: `Remove`, empty: `Empty`, equipOpt: `Equip…`, newTrait: `New {trait}! Choose one:`,
-    expand: `Expand`, collapse: `Collapse`,
+    expand: `Expand`, collapse: `Collapse`, details: `Details`, viewList: `List view`, viewTiles: `Tile view`, dirDesc: `High to low / Z-A (tap to reverse)`, dirAsc: `Low to high / A-Z (tap to reverse)`,
+    sortLabel: `Sort`, sortHired: `Hire order`, sortLevel: `Level`, sortClass: `Class`, sortName: `Name`, sortLoyalty: `{Loyalty}`, sortHp: `{Team} {hp}`, sortStatus: `Idle first`, hireTile: `{Hire}`,
     // dungeons / missions / armory
     dungeonsParty: `{Party} of {n}: ❤️ {hpv} {hp} · a failed run costs everyone 1 {loyalty}`, dungeonsTick: `Tick "{Party}" on {adventurers} in the {Guild} tab to form a {party}.`,
     traitReward: `{Trait} reward`, dungeonLine1: `{n} {rooms} {emojis} · ~{dmg} expected damage · {sec}s`, dungeonLine2: `{min}–{max}{goldIcon} · {xpn} {xp} · cleared {times}×`,
@@ -227,6 +228,7 @@ const CONFIG = {
   rosterCapWinsPerSlot: 0,   // +1 free slot per this many total clears (0 = off)
   rosterCapLevelsPerSlot: 0, // +1 free slot per this many TOTAL adventurer levels (0 = off; can shrink if adventurers leave)
   rosterCapMax: 12,          // hard ceiling on every source combined
+  theme: 'dark',             // 'dark' | 'light' | 'auto' (follow the device). No in-game button for now.
   scheduleUtc: true,         // class weekday schedules use UTC days (false = the player's local day)
   clockOffsetHours: 0,       // TESTING: shift the clock to see other weekdays (the server clock will replace this)
   traitEvery: 10,           // every N levels an adventurer is offered a new trait (pick 1 of 3)

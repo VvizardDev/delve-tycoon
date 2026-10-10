@@ -15,7 +15,7 @@
      missions: [{ dungeonId, advIds:[...], endsAt:msTimestamp }],
      log:      [string,...],           // newest first
      seen:     { trait:{id:true}, item:{id:true} },   // Codex discoveries
-     prefs:    { collapsed:{section:bool}, compact:bool, cardOpen:{adventurerId:bool} },  // UI preferences (saved)
+     prefs:    { collapsed:{section:bool}, view:'tiles'|'list', sort:key, sortDesc:bool, cardOpen:{id:bool} },  // UI preferences (saved)
      draft:    the hire pop-up draft, or absent
    } */
 /* Display text: T = words, S(key, vars) = sentences, both from TERMS in data.js. In a phrase {x} = vars.x or the term x; {X} = the term capitalised. */
@@ -31,11 +31,11 @@ const classOf = (a) => CLASSES[a.cls] || CLASSES[Object.keys(CLASSES)[0]];
 const variantsOf = (id) => (CLASSES[id] && CLASSES[id].portraits) || ART.portraitVariants;
 const faceId = (id, n) => (variantsOf(id) > 1 ? `${id}_${n}` : id);
 function newState() {
-  return { gold: CONFIG.startGold, nextId: 1, roster: [], inventory: [], progress: {}, lore: [], missions: [], reports: [], log: [S('welcome')], seen: { trait: {}, item: {} }, prefs: { collapsed: {}, compact: false, cardOpen: {} } };
+  return { gold: CONFIG.startGold, nextId: 1, roster: [], inventory: [], progress: {}, lore: [], missions: [], reports: [], log: [S('welcome')], seen: { trait: {}, item: {} }, prefs: { collapsed: {}, view: 'tiles', sort: 'hired', sortDesc: false, cardOpen: {} } };
 }
 let state = GameStorage.load() || newState();
 if (!state.reports) state.reports = [];   // older saves made before reports existed
-const ui = { party: [], tab: 'guild' };   // UI-only (not saved): party = ticked adventurer ids, tab = current view   // UI-only: adventurer ids ticked for the next mission (not saved)
+const ui = { party: [], tab: 'guild', detail: null, tavernOpen: false };   // UI-only (not saved): party = ticked adventurer ids, tab = current view   // UI-only: adventurer ids ticked for the next mission (not saved)
 
 /* ---------- 2. RULES (pure-ish helpers) ---------- */
 const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
@@ -255,11 +255,12 @@ function resolveMission(m) {
 const ACTIONS = {
   hire(el) {   // opens the hire pop-up with a rolled draft; nothing is paid until confirmHire
     const cls = el.dataset.cls, c = CLASSES[cls];
-    if (state.draft) { if (!$('draft').open) $('draft').showModal?.(); return; }   // a draft already exists: reopen it, never re-roll
+    if (state.draft) { showDlg($('draft')); return; }   // a draft already exists: reopen it, never re-roll
     if (state.gold < c.cost || state.roster.length >= rosterCap() || !classAvailable(cls)) return;
     const traits = rollTraits(cls); traits.forEach((t) => markSeen('trait', t));   // shown in the pop-up = discovered
+    ui.tavernOpen = false;
     state.draft = { cls, name: pick(NAMES), base: rollBase(cls), traits, portrait: faceId(cls, rand(1, variantsOf(cls))), rerolls: CONFIG.statRerolls };
-    $('draft').showModal?.();
+    showDlg($('draft'));
   },
   rerollStats() { const dr = state.draft; if (dr && dr.rerolls > 0) { dr.base = rollBase(dr.cls); dr.rerolls--; } },   // trait is NOT rerolled
   rerollName() { if (state.draft) state.draft.name = pick(NAMES); },
@@ -298,11 +299,17 @@ const ACTIONS = {
     dr.portrait = faceId(dr.cls, ((cur - 1 + +el.dataset.dir + n) % n) + 1);
   },
   toggleSection(el) { const c = prefs().collapsed; c[el.dataset.sec] = !c[el.dataset.sec]; },   // collapse/expand a panel
-  toggleCompact() { const p = prefs(); p.compact = !p.compact; p.cardOpen = {}; },              // all roster cards compact / detailed
-  toggleCard(el) { const p = prefs(), id = +el.dataset.id; p.cardOpen[id] = !(p.cardOpen[id] ?? !p.compact); },   // one card
+  toggleView() { const p = prefs(); p.view = p.view === 'list' ? 'tiles' : 'list'; },                     // roster: tile grid <-> detailed list
+  setSort(el) { const p = prefs(); p.sort = el.value; p.sortDesc = !['hired', 'name', 'class', 'status'].includes(el.value); },   // numbers high-first, text A-Z
+  toggleSortDir() { const p = prefs(); p.sortDesc = !p.sortDesc; },
+  openDetail(el) { ui.detail = +el.dataset.id; },
+  closeDetail() { ui.detail = null; $('detail').close?.(); },
+  openTavern() { ui.tavernOpen = true; },
+  closeTavern() { ui.tavernOpen = false; $('tavernDlg').close?.(); },
+  toggleCard(el) { const p = prefs(), id = +el.dataset.id; p.cardOpen[id] = !(p.cardOpen[id] ?? true); },   // one card
   tab(el) { ui.tab = el.dataset.tab; window.scrollTo?.(0, 0); },   // switch view (tab bar)
   dismissResult() { const r = state.reports.filter((x) => x.unread).pop(); if (r) r.unread = false; },   // next unread report (if any) shows on re-render
-  help() { $('help').showModal?.(); },
+  help() { showDlg($('help')); },
   toggleParty(el) {
     const id = +el.dataset.id;
     ui.party = ui.party.includes(id) ? ui.party.filter((x) => x !== id) : ui.party.length < CONFIG.maxParty ? [...ui.party, id] : ui.party;
@@ -354,12 +361,21 @@ document.addEventListener('input', (e) => { if (e.target.dataset && e.target.dat
 
 /* ---------- 4. RENDERING (each panel = one function returning HTML) ---------- */
 const $ = (id) => document.getElementById(id);
+/* Open a pop-up scrolled to the TOP (browsers otherwise focus the last button and jump to the bottom on phones). */
+const showDlg = (d) => { if (d.open) return; d.showModal?.(); d.scrollTop = 0; globalThis.requestAnimationFrame?.(() => { d.scrollTop = 0; }); };
+/* Theme: CONFIG.theme = 'dark' | 'light' | 'auto' (follow the device). There is no in-game toggle for now. */
+function applyTheme() {
+  const t = CONFIG.theme === 'auto' ? (globalThis.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : CONFIG.theme;
+  if (document.documentElement) document.documentElement.dataset.theme = t;
+}
+
 const fmt = (b) => Object.entries(b).map(([k, v]) => `+${v} ${STATS[k].emoji}${STATS[k].abbr}`).join(' ');
 const statLine = (s) => Object.keys(STATS).map((k) => `${STATS[k].emoji}${STATS[k].abbr} ${s[k]}`).join(' · ');
+const advHp = (a) => Math.round(statsOf(a).fortitude * CONFIG.hpPerFortitude + traitFx(a, 'hp'));   // HP this adventurer adds to the party pool
 const pips = (n, max) => Array.from({ length: max }, (_, i) => `<span class="pip ${i < n ? 'on' : ''}"></span>`).join('');
 
 /* ----- UI preferences (saved): collapsed panels, compact roster ----- */
-const prefs = () => (state.prefs ||= { collapsed: {}, compact: false, cardOpen: {} });
+const prefs = () => (state.prefs ||= { collapsed: {}, cardOpen: {} });
 const isCollapsed = (sec) => !!prefs().collapsed[sec];
 /* Panel heading with a collapse button. sec = key in prefs().collapsed; extra = buttons placed on the right. */
 const head = (sec, title, extra = '') => `<h2 class="hd"><button class="linkbtn" data-action="toggleSection" data-sec="${sec}" aria-expanded="${!isCollapsed(sec)}" title="${isCollapsed(sec) ? S('expand') : S('collapse')}">${isCollapsed(sec) ? '▸' : '▾'} ${title}</button>${isCollapsed(sec) ? '' : extra}</h2>`;
@@ -385,27 +401,32 @@ function tendencies(c) {
   const tag = (k) => `${STATS[k].emoji}${STATS[k].abbr}`;
   return S('tendencies', { strong: avg.slice(0, 2).map((x) => tag(x[0])).join(' '), weak: tag(avg[avg.length - 1][0]) });
 }
-function renderTavern() {
-  if (isCollapsed('tavern')) return head('tavern', Cap(T.tavern));
+/* Hiring pop-up (opened from the Roster): class cards, slot purchase. Choosing a class opens the hire-draft pop-up. */
+function tavernHtml() {
   const full = state.roster.length >= rosterCap(), cost = nextSlotCost();
   const buy = cost === null ? '' : ` <button class="ghost sm" data-action="buySlot" ${state.gold < cost ? 'disabled' : ''}>${S('buySlot', { cost })}</button>`;
-  return head('tavern', Cap(T.tavern)) + `<p class="dim">${S('tavernSub', { n: state.roster.length, cap: rosterCap(), hint: capHint() })}${buy}</p><div class="cards">` + Object.entries(CLASSES).filter(([k, c]) => classAvailable(k) || !c.hidden).map(([k, c]) => {
+  return `<h2 tabindex="-1" autofocus>${Cap(T.tavern)}</h2><p class="dim">${S('tavernSub', { n: state.roster.length, cap: rosterCap(), hint: capHint() })}${buy}</p><div class="cards">` + Object.entries(CLASSES).filter(([k, c]) => classAvailable(k) || !c.hidden).map(([k, c]) => {
     const ok = classAvailable(k);
     return `<article class="card ${ok ? '' : 'away'}"><div class="card-top">${portraitHtml({ cls: k, portrait: faceId(k, 1) })}<div class="who"><div class="name">${clsName(k)}</div>
       <div class="dim">${ok ? (c.hideTendencies ? '' : tendencies(c)) : '🔒 ' + classLockText(k)}</div><div class="dim">${c.blurb} ${S('tavernLoyalty', { n: c.maxLoyalty ?? CONFIG.maxLoyalty })}</div></div></div>
       ${ok ? `<button data-action="hire" data-cls="${k}" ${state.gold < c.cost || full ? 'disabled' : ''}>${full ? S('rosterFull') : c.cost ? S('hireBtn', { cost: c.cost }) : S('hireFree')}</button>` : ''}</article>`;
-  }).join('') + '</div>';
+  }).join('') + `</div><p><button class="ghost" data-action="closeTavern">${Cap(T.close)}</button></p>`;
+}
+function renderTavernDlg() {
+  const dlg = $('tavernDlg');
+  if (!ui.tavernOpen || state.draft) { $('tavernBody').innerHTML = ''; if (dlg.open) dlg.close?.(); return; }   // the hire-draft pop-up takes over
+  $('tavernBody').innerHTML = tavernHtml(); showDlg(dlg);
 }
 const traitChoiceHtml = (a) => (a.traitChoices && a.traitChoices[0])
   ? `<div><b class="win">${S('newTrait')}</b> ${a.traitChoices[0].map((t) => `<button class="sm r-${TRAITS[t].rarity}" data-action="pickTrait" data-id="${a.id}" data-trait="${t}" title="${TRAITS[t].desc}">${TRAITS[t].name}</button>`).join(' ')}</div>` : '';
 
 /* One roster card. Detailed = stats grid, loyalty, equipment. Compact = one streamlined row. Open/closed: prefs().cardOpen[id] overrides the global compact switch. */
-function rosterCard(a) {
+function rosterCard(a, inDialog = false) {
   const s = statsOf(a), b = baseOf(a), c = classOf(a), busy = isBusy(a.id), need = CONFIG.xpToNext(a.level), p = prefs();
-  const max = maxLoyaltyOf(a), fee = loyaltyFee(a), hp = Math.round(s.fortitude * CONFIG.hpPerFortitude + traitFx(a, 'hp'));
-  const open = p.cardOpen[a.id] ?? !p.compact, risk = a.loyalty <= 1 && max > 1, picked = ui.party.includes(a.id);
+  const max = maxLoyaltyOf(a), fee = loyaltyFee(a), hp = advHp(a);
+  const open = inDialog || (p.cardOpen[a.id] ?? true), risk = a.loyalty <= 1 && max > 1, picked = ui.party.includes(a.id);
   const tag = busy ? `<span class="tag">${S('away')}</span>` : '';
-  const tog = `<button class="ghost sm tog" data-action="toggleCard" data-id="${a.id}" aria-expanded="${open}" title="${open ? S('collapse') : S('expand')}">${open ? '▾' : '▸'}</button>`;
+  const tog = inDialog ? '' : `<button class="ghost sm tog" data-action="toggleCard" data-id="${a.id}" aria-expanded="${open}" title="${open ? S('collapse') : S('expand')}">${open ? '▾' : '▸'}</button>`;
   const pick = `<label class="pick"><input type="checkbox" data-action="toggleParty" data-id="${a.id}" ${picked ? 'checked' : ''} ${busy ? 'disabled' : ''}>${Cap(T.party)}</label>`;
   const traitNames = (a.traits || []).map((t) => `<span class="chip r-${TRAITS[t].rarity}" title="${TRAITS[t].desc}">${TRAITS[t].name}</span>`).join('') || `<span class="dim">${S('noTraits')}</span>`;
   if (!open) return `<article class="card compact ${busy ? 'away' : ''} ${picked ? 'picked' : ''}"><div class="card-top">${portraitHtml(a, 'sm')}<div class="who">
@@ -431,12 +452,44 @@ function rosterCard(a) {
     <div class="slots">${slots}</div>
     <div class="card-foot"><button class="ghost sm" data-action="release" data-id="${a.id}" ${busy ? 'disabled' : ''}>${Cap(T.release)}</button></div></article>`;
 }
+/* Sorted copy of the roster per prefs (sort key + direction). Keys: hired, level, class, name, loyalty, hp, status, or any STATS id. */
+function sortedRoster() {
+  const p = prefs(), key = p.sort || 'hired', dir = p.sortDesc ? -1 : 1;
+  const val = (a) => (key === 'level' ? a.level : key === 'class' ? clsName(a.cls) : key === 'name' ? a.name : key === 'loyalty' ? a.loyalty : key === 'hp' ? advHp(a) : key === 'status' ? (isBusy(a.id) ? 1 : 0) : key in STATS ? statsOf(a)[key] : a.id);
+  return [...state.roster].sort((x, y) => { const vx = val(x), vy = val(y); return ((typeof vx === 'string' ? vx.localeCompare(vy) : vx - vy) || x.id - y.id) * dir; });
+}
+/* Square tile: tap = add/remove from the party; the (i) button opens the details pop-up. */
+function rosterTile(a) {
+  const busy = isBusy(a.id), picked = ui.party.includes(a.id), max = maxLoyaltyOf(a), risk = a.loyalty <= 1 && max > 1;
+  return `<div class="tile ${picked ? 'picked' : ''} ${busy ? 'away' : ''}">
+    <button class="tilebtn" data-action="toggleParty" data-id="${a.id}" ${busy ? 'disabled' : ''} aria-pressed="${picked}" aria-label="${a.name}">
+      <div class="portrait fill" aria-hidden="true"><span>${classOf(a).emoji}</span>${artLayer('portrait', a.portrait || a.cls)}</div>
+      ${picked ? '<span class="check">✓</span>' : ''}${busy ? `<span class="tag away-tag">${S('away')}</span>` : ''}${a.traitChoices && a.traitChoices[0] ? '<span class="newdot">!</span>' : ''}
+      <span class="tinfo"><b>${a.name}</b><span>${S('level', { n: a.level })} · ${clsName(a.cls)}</span><span class="${risk ? 'warnpips' : ''}">${pips(a.loyalty, max)}</span></span></button>
+    <button class="ghost sm info" data-action="openDetail" data-id="${a.id}" aria-label="${S('details')}" title="${S('details')}">ⓘ</button></div>`;
+}
 function renderRoster() {
-  if (isCollapsed('roster')) return head('roster', `${Cap(T.roster)} (${state.roster.length})`);
-  if (!state.roster.length) return head('roster', Cap(T.roster)) + `<p class="dim">${S('rosterEmpty')}</p>`;
-  const sel = ui.party.filter(byId), p = prefs();
+  const n = state.roster.length, p = prefs(), cap = rosterCap(), title = `${Cap(T.roster)} (${n}/${cap})`;
+  if (isCollapsed('roster')) return head('roster', title);
+  const sortOpts = [['hired', S('sortHired')], ['level', S('sortLevel')], ['class', S('sortClass')], ['name', S('sortName')], ['loyalty', S('sortLoyalty')], ['hp', S('sortHp')], ['status', S('sortStatus')], ...Object.keys(STATS).map((k) => [k, `${STATS[k].emoji} ${STATS[k].name}`])]
+    .map(([k, label]) => `<option value="${k}" ${(p.sort || 'hired') === k ? 'selected' : ''}>${label}</option>`).join('');
+  const tools = `<div class="rostertools"><button class="sm" data-action="openTavern">＋ ${S('hireTile')}</button>
+    ${n > 1 ? `<label class="sortlbl"><span class="dim">${S('sortLabel')}</span><select data-action="setSort" aria-label="${S('sortLabel')}">${sortOpts}</select></label>
+    <button class="ghost sm" data-action="toggleSortDir" title="${S(p.sortDesc ? 'dirDesc' : 'dirAsc')}" aria-label="${S(p.sortDesc ? 'dirDesc' : 'dirAsc')}">${p.sortDesc ? '↓' : '↑'}</button>
+    <button class="ghost sm" data-action="toggleView">${p.view === 'list' ? S('viewTiles') : S('viewList')}</button>` : ''}</div>`;
+  if (!n) return head('roster', title) + tools + `<p class="dim">${S('rosterEmpty')}</p>`;
+  const sel = ui.party.filter(byId);
   const bar = sel.length ? S('partySel', { n: sel.length, max: CONFIG.maxParty, hpv: partyHp(sel) }) : S('partyHint');
-  return head('roster', Cap(T.roster), `<button class="ghost sm" data-action="toggleCompact">${p.compact ? T.detailView : T.compactView}</button>`) + `<p class="partybar">${bar}</p><div class="cards">${state.roster.map(rosterCard).join('')}</div>`;
+  const list = sortedRoster();
+  const body = p.view === 'list' ? `<div class="cards">${list.map((a) => rosterCard(a)).join('')}</div>`
+    : `<div class="tiles">${list.map(rosterTile).join('')}${n < cap ? `<button class="tile addtile" data-action="openTavern" aria-label="${S('hireTile')}">＋<span>${S('hireTile')}</span></button>` : ''}</div>`;
+  return head('roster', title) + tools + `<p class="partybar">${bar}</p>` + body;
+}
+function renderDetail() {
+  const a = ui.detail && byId(ui.detail), dlg = $('detail');
+  if (!a) { ui.detail = null; $('detailBody').innerHTML = ''; if (dlg.open) dlg.close?.(); return; }
+  $('detailBody').innerHTML = rosterCard(a, true) + `<p><button class="ghost" data-action="closeDetail">${Cap(T.close)}</button></p>`;
+  showDlg(dlg);
 }
 function renderDungeons() {
   const ids = ui.party.filter(byId);
@@ -513,14 +566,14 @@ function renderResult() {
   const unread = state.reports.filter((x) => x.unread), r = unread[unread.length - 1], dlg = $('result');
   if (!r) { $('resultBody').innerHTML = ''; if (dlg.open) dlg.close?.(); return; }
   const d = DUNGEONS.find((x) => x.id === r.dungeonId);
-  $('resultBody').innerHTML = `<h2 class="${r.win ? 'win' : 'lose'}">${r.dungeon}: ${S(r.win ? 'resultCleared' : 'resultFailed')}</h2>
+  $('resultBody').innerHTML = `<h2 tabindex="-1" autofocus class="${r.win ? 'win' : 'lose'}">${r.dungeon}: ${S(r.win ? 'resultCleared' : 'resultFailed')}</h2>
     ${d ? `<div class="resultart">${d.emoji || ''} ${r.win ? '🏆' : '💀'}${artLayer('result', d.id + (r.win ? '_win' : '_fail'))}</div>` : ''}
     ${(r.lore || []).map((id) => `<div class="lorebox"><div class="entry">${icon('lore', id, '📜', 'wide')}<div><b>${S('loreUnlocked', { title: LORE[id].title })}</b><br><span class="dim">${LORE[id].text}</span></div></div></div>`).join('')}
     ${(r.unlocked || []).map((n) => `<div class="lorebox">🗺️ <b>${S('revealed', { name: n })}</b></div>`).join('')}
     ${(r.codex || []).map((n) => `<div class="lorebox">📖 ${S('newEntry', { name: n })}</div>`).join('')}
     <h2>${Cap(T.battleReport)}</h2>${r.beats.map((b) => `<p class="beat">${b}</p>`).join('')}
     <p><button data-action="dismissResult">${unread.length > 1 ? S('continueMore', { n: unread.length - 1 }) : S('continue')}</button></p>`;
-  if (!dlg.open) dlg.showModal?.();
+  showDlg(dlg);
 }
 function renderDraft() {
   const dr = state.draft; if (!dr) return '';
@@ -529,7 +582,7 @@ function renderDraft() {
   const stats = Object.keys(STATS).map((k) => { const diff = s[k] - dr.base[k];
     return `<div>${STATS[k].emoji} ${STATS[k].name}: <b>${dr.base[k]}</b>${diff ? ` <span class="dim">${diff > 0 ? '+' : ''}${S('traitMod', { n: diff })}</span>` : ''} <span class="dim">${S('rangeNote', { cls: clsName(dr.cls), lo: c.roll[k][0], hi: c.roll[k][1] })}</span></div>`; }).join('');
   const traits = dr.traits.length ? dr.traits.map((t) => `<div><span class="chip r-${TRAITS[t].rarity}">${TRAITS[t].name} · ${TRAITS[t].rarity}</span> <span class="dim">${TRAITS[t].desc}</span></div>`).join('') : `<span class="dim">${S('noTrait')}</span>`;
-  return `<h2>${S('draftTitle', { cls: clsName(dr.cls) })}</h2>
+  return `<h2 tabindex="-1" autofocus>${S('draftTitle', { cls: clsName(dr.cls) })}</h2>
     <div class="facerow">${variantsOf(dr.cls) > 1 ? `<button class="ghost sm" data-action="cycleFace" data-dir="-1" title="${S('faceBtn')}">◀</button>` : ''}${portraitHtml({ cls: dr.cls, portrait: dr.portrait }, 'lg')}${variantsOf(dr.cls) > 1 ? `<button class="ghost sm" data-action="cycleFace" data-dir="1" title="${S('faceBtn')}">▶</button>` : ''}</div><p class="dim" style="text-align:center">${S('artNote')}</p>
     <p><label>${S('nameLabel')} <input type="text" data-draft="name" maxlength="20" value="${dr.name}"></label> <button class="ghost" data-action="rerollName">${S('rerollName')}</button></p>
     ${stats}
@@ -540,7 +593,6 @@ function renderDraft() {
 function render() {
   $('gold').textContent = `${T.goldIcon} ${state.gold}`;
   $('runbar').innerHTML = renderRunbar();
-  $('tavern').innerHTML = renderTavern();
   $('roster').innerHTML = renderRoster();
   $('dungeons').innerHTML = renderDungeons();
   $('missions').innerHTML = renderMissions();
@@ -553,6 +605,8 @@ function render() {
   $('log').innerHTML = head('log', Cap(T.log)) + (isCollapsed('log') ? '' : state.log.map((l) => `<p>${l}</p>`).join(''));
   $('navBadge').textContent = state.missions.length || '';
   renderResult();
+  renderTavernDlg();
+  renderDetail();
   document.querySelectorAll?.('.view')?.forEach((v) => { v.hidden = v.dataset.view !== ui.tab; });          // show only the current tab
   document.querySelectorAll?.('#nav button')?.forEach((b) => b.classList.toggle('active', b.dataset.tab === ui.tab));
 }
@@ -572,24 +626,27 @@ function tick() {
   }
 }
 // Backfill saves made before loyalty / rolled stats / Codex discoveries existed.
-state.seen ||= { trait: {}, item: {} }; prefs();
+state.seen ||= { trait: {}, item: {} }; { const p = prefs(); p.view ||= 'tiles'; p.sort ||= 'hired'; p.cardOpen ||= {}; }
 state.roster.forEach((a) => { if ((!a.portrait || a.portrait === a.cls) && variantsOf(a.cls) > 1) a.portrait = faceId(a.cls, rand(1, variantsOf(a.cls))); });   // give older adventurers a face
 state.roster.forEach((a) => { (a.traits || []).forEach((t) => markSeen('trait', t)); (a.traitChoices || []).flat().forEach((t) => markSeen('trait', t)); Object.values(a.gear).filter(Boolean).forEach((i) => markSeen('item', i)); });
 state.inventory.forEach((i) => markSeen('item', i));
 state.roster.forEach((a) => { if (a.loyalty === undefined) a.loyalty = maxLoyaltyOf(a); a.loyalty = Math.min(a.loyalty, maxLoyaltyOf(a)); if (a.hireCost === undefined) a.hireCost = classOf(a).cost; });
 function renderHelp() {
-  return `<h2>${S('helpTitle')}</h2><p>${S('help1', { maxParty: CONFIG.maxParty })}</p><p>${S('help2')}</p><h2>${S('statsTitle')}</h2>` + Object.values(STATS).map((s) => `<p>${s.emoji} <b>${s.name}</b> (${s.abbr}): ${s.role}</p>`).join('');
+  return `<h2 tabindex="-1" autofocus>${S('helpTitle')}</h2><p>${S('help1', { maxParty: CONFIG.maxParty })}</p><p>${S('help2')}</p><h2>${S('statsTitle')}</h2>` + Object.values(STATS).map((s) => `<p>${s.emoji} <b>${s.name}</b> (${s.abbr}): ${s.role}</p>`).join('');
 }
 document.querySelectorAll?.('[data-term]')?.forEach((el) => { el.textContent = Cap(T[el.dataset.term]); });   // static labels in index.html
 $('helpBody').innerHTML = renderHelp();
 // The hire pop-up has no exit except Hire: block Esc, and reopen if anything closes it while a draft exists.
 $('draft').addEventListener?.('cancel', (e) => e.preventDefault());
-$('result').addEventListener?.('cancel', (e) => e.preventDefault());   // must click Continue
-$('draft').addEventListener?.('close', () => { if (state.draft) $('draft').showModal?.(); });
+$('result').addEventListener?.('cancel', (e) => e.preventDefault());
+$('tavernDlg').addEventListener?.('close', () => { ui.tavernOpen = false; });
+$('detail').addEventListener?.('close', () => { ui.detail = null; });   // must click Continue
+$('draft').addEventListener?.('close', () => { if (state.draft) showDlg($('draft')); });
 // A saved draft that can no longer be afforded (or roster full) is dropped so the player is never stuck.
 if (state.draft && (!CLASSES[state.draft.cls] || state.gold < CLASSES[state.draft.cls].cost || state.roster.length >= rosterCap())) state.draft = null;
-if (!state.seenHelp) { state.seenHelp = true; $('help').showModal?.(); }
+if (!state.seenHelp) { state.seenHelp = true; showDlg($('help')); }
+applyTheme();
 render();
-if (state.draft) $('draft').showModal?.();   // resume an unfinished hire after a page refresh
+if (state.draft) showDlg($('draft'));   // resume an unfinished hire after a page refresh
 setInterval(tick, 1000);
 tick();

@@ -33,6 +33,18 @@ Double-click `index.html`. No build step, no dependencies.
 - `portraits: n` = number of faces for the class (default `ART.portraitVariants`, 3). Files `art/portraits/<id>_1.webp` ... `_n`. Each hire gets a random face; the hire pop-up has ◀ ▶ to change it (cosmetic, free).
 - **Server note:** the schedule uses `serverNow()` in game.js (today only shifted by `CONFIG.clockOffsetHours` for testing). With Supabase, replace it with the server's date and enforce the same check inside the hire function so a changed device clock gets nothing. UTC days are used by default (`CONFIG.scheduleUtc`).
 
+## Playtest round 2 features
+- **Saved parties**: with adventurers ticked, press *Save party* in the roster party bar (name it); chips appear next to *Last party* in the Missions tab (tap = select, ✕ = delete; disabled while a member is away). Up to `CONFIG.maxSquads`. Data: `state.squads`.
+- **Selling**: Armory rows have a Sell button. Price = total stat bonus x `CONFIG.sellPerStatPoint` (or `value: n` on the item); a confirm appears above `sellConfirmFrom`.
+- **Gold**: dungeon gold ranges were cut to about 35% of before (edit `gold: [min, max]` per dungeon).
+- **Best odds are 95%**: every room has a small irreducible "freak accident" chance (`roomMishap`), sized so even a perfect party clears at most `CONFIG.maxClearChance` (0.95). HP and traits cannot buy it back; the displayed clear odds come from simulation so they never exceed it.
+- **Level cap**: `CONFIG.maxLevel` (10). XP stops at the cap (bar shows MAX); the level-10 trait choice still arrives (`traitEvery`).
+- **Class name lists**: `names: [...]` per class in data.js (falls back to `NAMES`). The starter lists in your data.js are placeholders.
+- **Hire pop-up**: the re-roll button (bottom) now re-rolls **stats + trait** (2 per hire). A close X (top right) exists only before the first re-roll; closing an untouched draft keeps that same roll for next time (so closing can never be used to re-roll). Esc follows the same rule.
+- **All pop-ups have a top-right X.**
+- **Tiles**: a select box (top right) shows/toggles party membership; tapping the tile still toggles it; the ▸ box (bottom right) expands the details pop-up.
+- **Previews**: equipment dropdown entries list their bonus (e.g. `Rusty Sword (+3 ⚔️MIT)`); choosing one equips it immediately, as before. At a trait milestone, hovering (desktop) or tapping a trait previews it live on the stat line; *Take {trait}* confirms.
+
 ## Roster cap
 `rosterCap()` = `rosterCapStart` (4) + **bought slots** + optional free sources, up to `rosterCapMax` (12). Bought slots use the price list `CONFIG.rosterSlotCosts` (150, 300, 500, ... one entry per purchasable slot; the button is in the Tavern). Free sources, all **off (0)** for now: `rosterCapPerNewDungeon`, `rosterCapWinsPerSlot`, `rosterCapLevelsPerSlot` (the level one can shrink if adventurers leave). Existing adventurers are never removed if the cap drops; you just can't hire until under it.
 
@@ -61,6 +73,9 @@ Traits and items are recorded in `state.seen` the first time they appear (shown 
 
 ## Art infrastructure
 See `art/README.md` and `ART` in data.js. Art is looked up by data id (`art/<folder>/<id>.webp`) for characters (portraits), dungeons (banners), dungeon results (win/fail art in the mission pop-up), lore, items and traits; missing files fall back to emoji placeholders. Set `ART.enabled = true` when files exist; run `artManifest()` in the console for the exact file list.
+
+## Default data (defaults/data.default.js)
+`defaults/data.default.js` is the untouched `data.js` that shipped with this version. `js/data.js` is the live copy you edit. Keep each version's default: when a new version arrives, compare your `data.js` with the default of the version you started from (or three-way merge: `git merge-file yourdata.js old-default.js new-default.js`) to carry your changes forward without losing new settings. The game only loads `js/data.js`; the defaults file is never loaded.
 
 ## Files
 | File | Purpose |

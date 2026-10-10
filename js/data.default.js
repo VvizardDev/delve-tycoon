@@ -30,6 +30,9 @@ const TERMS = {
     capMax: `Maximum size reached.`, capNewDungeon: `First clear of a new {dungeon} = +{n} slot.`, capWins: `{n} more clears = +1 slot.`, capLevels: `{n} more total levels = +1 slot.`,
     buySlot: `Buy slot ({cost}{goldIcon})`, logSlot: `{Roster} slot bought for {cost}{goldIcon} (now {cap}).`,
     classDays: `Available on: {days}`, classEvent: `Limited-time class.`, faceBtn: `Change face`,
+    mishap: `<span class="lose">Disaster! A freak accident ends the run at the {room}: {name}.</span>`,
+    saveParty: `Save {party}`, squadPrompt: `Name this {party}:`, squadDefault: `{Party} {n}`, squadAway: `Some members are away`, deleteSquad: `Delete saved {party}`, confirmDeleteSquad: `Delete saved {party} "{name}"?`,
+    sellBtn: `Sell {value}{goldIcon}`, logSold: `Sold {name} for {value}{goldIcon}.`, confirmSell: `Sell {name} for {value}{goldIcon}?`, confirmTrait: `Take {name}`, maxLevel: `MAX`,
     unlockLore: `Uncover: {title}`, unlockClears: `Clear {name} {n}×`,
     reqClass: `with a {class} in the {party}`, reqItem: `with {name} equipped`, reqTrait: `with a {name}`, reqSolo: `solo`, reqFlawless: `without a failed {attempt}`, reqLevel: `with someone at level {n}+`,
     loreHint: `Clear {name} {n}× {req}`, loreDefault: `Keep exploring.`, locked: `Locked`, unseen: `???`,
@@ -65,8 +68,8 @@ const TERMS = {
     reportsEmpty: `Reports appear here when a {party} returns.`, wordCleared: `cleared`, wordFailed: `failed`, resultCleared: `Cleared`, resultFailed: `Failed`,
     continue: `Continue`, continueMore: `Continue ({n} more)`, newEntry: `New {Codex} entry: {name}`,
     // hire pop-up
-    draftTitle: `{Hire} a {cls}`, artNote: `Portrait & paper-doll customisation coming later`, nameLabel: `Name`, rerollName: `Re-roll name`, rerollStats: `Re-roll stats ({n} left)`,
-    rangeNote: `({cls} range {lo}–{hi})`, traitHead: `{Trait} (fixed)`, noTrait: `No {trait}.`, hireFor: `{Hire} for {cost}{goldIcon}`, traitMod: `{n} {trait}`,
+    draftTitle: `{Hire} a {cls}`, artNote: `Portrait & paper-doll customisation coming later`, nameLabel: `Name`, rerollName: `Re-roll name`, rerollStats: `Re-roll stats + {trait} ({n} left)`,
+    rangeNote: `({cls} range {lo}–{hi})`, traitHead: `{Trait}`, noTrait: `No {trait}.`, hireFor: `{Hire} for {cost}{goldIcon}`, traitMod: `{n} {trait}`,
     // help window
     helpTitle: `How to play`, statsTitle: `Stats`,
     help1: `{Hire} {adventurers} at the {tavern} (their stats and {traits} are rolled when you {hire}), tick up to {maxParty} in the {roster} to form a {party}, and send them into a {dungeon}. The fight plays out automatically {room} by {room}: each {room} tests one stat, and every {attempt}, pass or fail, drains the {party}'s shared {hp}.`,
@@ -89,6 +92,7 @@ const STATS = {
    unlock / hidden / schedule : availability in the Tavern. unlock = same rules as dungeons ({ lore:[ids], clears:{dungeonId:n} }). hidden:true = not listed until available
                 (default: listed locked with its requirements). schedule = { days:[0-6] (0=Sunday), from:'YYYY-MM-DD', until:'YYYY-MM-DD' } (all optional), e.g. weekend-only classes.
                 Hired adventurers are never removed when a class becomes unavailable. TODO server: today's date and the schedule will come from the server.
+   names       : optional list of first names for this class (hire names and the re-roll name button); falls back to NAMES below.
    portraits   : how many portrait variants (faces) this class has; default ART.portraitVariants. Files: art/portraits/<id>_1.webp ... <id>_N.webp
    emoji       : placeholder portrait (replaced by art later, see portraitHtml in game.js)
    cost        : gold to hire (0 = free). Also the gold fee to restore ONE loyalty point.
@@ -101,14 +105,14 @@ const STATS = {
    hideTendencies : true = tavern shows only the blurb (used by the goon).
    blurb       : one line of tavern text. */
 const CLASSES = {
-  warrior: { name: 'Warrior', emoji: '🪖', cost: 50, maxTraits: 1, traitBias: { brawler: 2, stalwart: 2, bulwark: 2, hale: 2 }, roll: { might: [4, 6], agility: [1, 3], insight: [0, 2], presence: [1, 3], fortitude: [5, 7] }, grow: { might: 2, agility: 0, insight: 0, presence: 1, fortitude: 2 }, blurb: 'Hits hard and soaks damage.' },
-  rogue:   { name: 'Rogue', emoji: '🥷', cost: 60, maxTraits: 1, traitBias: { nimble: 2, keen: 2, duelist: 2, lucky_find: 2, second_wind: 2 }, roll: { might: [2, 4], agility: [5, 7], insight: [1, 3], presence: [0, 2], fortitude: [2, 4] }, grow: { might: 1, agility: 2, insight: 1, presence: 0, fortitude: 1 }, blurb: 'Quick, sneaky and lucky with loot.' },
-  mage:    { name: 'Mage', emoji: '🧙', cost: 70, maxTraits: 1, traitBias: { sharp_eyed: 2, keen: 2, boss_slayer: 2, quick_study: 2 }, roll: { might: [0, 2], agility: [1, 3], insight: [6, 8], presence: [2, 4], fortitude: [1, 3] }, grow: { might: 0, agility: 1, insight: 3, presence: 1, fortitude: 1 }, blurb: 'Brilliant but fragile.' },
-  cleric:  { name: 'Cleric', emoji: '🕯️', cost: 60, maxTraits: 1, traitBias: { commanding: 2, medic: 2, iron_will: 2, loyal_heart: 2, last_breath: 2 }, roll: { might: [1, 3], agility: [0, 2], insight: [2, 4], presence: [5, 7], fortitude: [3, 5] }, grow: { might: 1, agility: 0, insight: 1, presence: 2, fortitude: 1 }, blurb: 'Steadfast and inspiring.' },
-  goon:    { name: 'Goon', emoji: '👤', cost: 0, maxLoyalty: 1, maxTraits: 0, hideTendencies: true, roll: { might: [1, 2], agility: [1, 2], insight: [0, 1], presence: [0, 1], fortitude: [1, 2] }, grow: { might: 1, agility: 0, insight: 0, presence: 0, fortitude: 1 }, blurb: 'Free, weak and expendable: 1 {loyalty}, no restoring. Your safety net.' },
+  warrior: { name: 'Warrior', names: ['Brann', 'Ulf', 'Torv', 'Hild', 'Gunnar', 'Sigrid'], emoji: '🪖', cost: 50, maxTraits: 1, traitBias: { brawler: 2, stalwart: 2, bulwark: 2, hale: 2 }, roll: { might: [4, 6], agility: [1, 3], insight: [0, 2], presence: [1, 3], fortitude: [5, 7] }, grow: { might: 2, agility: 0, insight: 0, presence: 1, fortitude: 2 }, blurb: 'Hits hard and soaks damage.' },
+  rogue:   { name: 'Rogue', names: ['Rook', 'Sable', 'Wren', 'Kest', 'Vex', 'Nim'], emoji: '🥷', cost: 60, maxTraits: 1, traitBias: { nimble: 2, keen: 2, duelist: 2, lucky_find: 2, second_wind: 2 }, roll: { might: [2, 4], agility: [5, 7], insight: [1, 3], presence: [0, 2], fortitude: [2, 4] }, grow: { might: 1, agility: 2, insight: 1, presence: 0, fortitude: 1 }, blurb: 'Quick, sneaky and lucky with loot.' },
+  mage:    { name: 'Mage', names: ['Isolde', 'Edda', 'Zara', 'Merrow', 'Orin', 'Thessaly'], emoji: '🧙', cost: 70, maxTraits: 1, traitBias: { sharp_eyed: 2, keen: 2, boss_slayer: 2, quick_study: 2 }, roll: { might: [0, 2], agility: [1, 3], insight: [6, 8], presence: [2, 4], fortitude: [1, 3] }, grow: { might: 0, agility: 1, insight: 3, presence: 1, fortitude: 1 }, blurb: 'Brilliant but fragile.' },
+  cleric:  { name: 'Cleric', names: ['Mira', 'Vale', 'Aurel', 'Benedict', 'Sorrel', 'Anselm'], emoji: '🕯️', cost: 60, maxTraits: 1, traitBias: { commanding: 2, medic: 2, iron_will: 2, loyal_heart: 2, last_breath: 2 }, roll: { might: [1, 3], agility: [0, 2], insight: [2, 4], presence: [5, 7], fortitude: [3, 5] }, grow: { might: 1, agility: 0, insight: 1, presence: 2, fortitude: 1 }, blurb: 'Steadfast and inspiring.' },
+  goon:    { name: 'Goon', names: ['Grub', 'Snag', 'Mud', 'Pip', 'Lug', 'Boil'], emoji: '👤', cost: 0, maxLoyalty: 1, maxTraits: 0, hideTendencies: true, roll: { might: [1, 2], agility: [1, 2], insight: [0, 1], presence: [0, 1], fortitude: [1, 2] }, grow: { might: 1, agility: 0, insight: 0, presence: 0, fortitude: 1 }, blurb: 'Free, weak and expendable: 1 {loyalty}, no restoring. Your safety net.' },
   // ---- SAMPLE classes to show the new systems (placeholders: edit or delete) ----
-  ranger:  { name: 'Ranger', emoji: '🧭', cost: 65, maxTraits: 1, unlock: { clears: { cellar: 1 } }, traitBias: { nimble: 2, keen: 2, scavenger: 2 }, roll: { might: [2, 4], agility: [4, 6], insight: [2, 4], presence: [1, 3], fortitude: [3, 5] }, grow: { might: 1, agility: 2, insight: 1, presence: 0, fortitude: 1 }, blurb: 'Scout and trapper. Unlocks after your first {dungeon} clear.' },
-  bard:    { name: 'Bard', emoji: '🎻', cost: 60, maxTraits: 1, hidden: true, schedule: { days: [5, 6, 0] }, traitBias: { commanding: 2, silver_tongue: 2 }, roll: { might: [0, 2], agility: [2, 4], insight: [2, 4], presence: [5, 7], fortitude: [2, 4] }, grow: { might: 0, agility: 1, insight: 1, presence: 2, fortitude: 1 }, blurb: 'Weekend visitor (Fri-Sun). Inspiring and well paid.' },
+  ranger:  { name: 'Ranger', names: ['Fenn', 'Hazel', 'Tarn', 'Briar', 'Roan', 'Ash'], emoji: '🧭', cost: 65, maxTraits: 1, unlock: { clears: { cellar: 1 } }, traitBias: { nimble: 2, keen: 2, scavenger: 2 }, roll: { might: [2, 4], agility: [4, 6], insight: [2, 4], presence: [1, 3], fortitude: [3, 5] }, grow: { might: 1, agility: 2, insight: 1, presence: 0, fortitude: 1 }, blurb: 'Scout and trapper. Unlocks after your first {dungeon} clear.' },
+  bard:    { name: 'Bard', names: ['Lark', 'Ditty', 'Cadence', 'Rhyme', 'Jig', 'Verity'], emoji: '🎻', cost: 60, maxTraits: 1, hidden: true, schedule: { days: [5, 6, 0] }, traitBias: { commanding: 2, silver_tongue: 2 }, roll: { might: [0, 2], agility: [2, 4], insight: [2, 4], presence: [5, 7], fortitude: [2, 4] }, grow: { might: 0, agility: 1, insight: 1, presence: 2, fortitude: 1 }, blurb: 'Weekend visitor (Fri-Sun). Inspiring and well paid.' },
 };
 
 /* Traits. Every hire rolls ONE (goons none); one more is offered every CONFIG.traitEvery levels (you choose
@@ -169,7 +173,7 @@ const SLOTS = { weapon: { emoji: '🗡️', name: 'Weapon' }, armor: { emoji: '�
 // Random names for hires.
 const NAMES = ['Brann','Isolde','Kest','Mira','Torv','Vale','Edda','Rook','Sable','Ulf','Wren','Zara'];
 
-// Items. slot: weapon | armor | trinket. bonus: stats added while equipped (use any STATS keys).
+// Items. optional value: n = sale price (default: total bonus x CONFIG.sellPerStatPoint). slot: weapon | armor | trinket. bonus: stats added while equipped (use any STATS keys).
 const ITEMS = {
   rusty_sword:   { name: 'Rusty Sword',    slot: 'weapon',  bonus: { might: 3 } },
   oak_staff:     { name: 'Oak Staff',      slot: 'weapon',  bonus: { insight: 4 } },
@@ -195,10 +199,10 @@ const ITEMS = {
    hidden     : true = not shown at all until unlocked (default: shown locked with its requirements)
    traitReward: null, or a TRAITS id granted to every party member on ANY clear (if they lack it). Leave null for most dungeons. */
 const DUNGEONS = [
-  { id: 'cellar', emoji: '💧',  name: 'Flooded Cellar',   difficulty: 15, damage: 6,  duration: 10, gold: [20, 40],   xp: 15,  loot: [['rusty_sword', .4], ['leather_vest', .4]], loreRewards: [{ id: 'cellar', clears: 1 }, { id: 'cellar_deep', clears: 3 }], unlock: null, hidden: false, traitReward: null },
-  { id: 'mine', emoji: '⛏️',    name: 'Abandoned Mine',   difficulty: 40, damage: 12,  duration: 20, gold: [50, 90],   xp: 35,  loot: [['oak_staff', .35], ['lucky_coin', .3]],   loreRewards: [{ id: 'mine', clears: 1 }], unlock: null, hidden: false, traitReward: null },
-  { id: 'crypt', emoji: '⚰️',   name: 'Crypt of Ash',     difficulty: 90, damage: 18,  duration: 40, gold: [120, 200], xp: 80,  loot: [['bone_mail', .35], ['crypt_signet', .15]], loreRewards: [{ id: 'crypt', clears: 1 }, { id: 'crypt_reading', clears: 1, requires: { class: 'cleric' } }], unlock: null, hidden: false, traitReward: null },
-  { id: 'spire', emoji: '🗼',   name: 'The Hollow Spire', difficulty: 200, damage: 21, duration: 80, gold: [300, 500], xp: 180, loot: [['moon_blade', .25]],                      loreRewards: [{ id: 'spire', clears: 1 }], unlock: null, hidden: false, traitReward: 'hungers_mark' },
+  { id: 'cellar', emoji: '💧',  name: 'Flooded Cellar',   difficulty: 15, damage: 6,  duration: 10, gold: [7, 14],   xp: 15,  loot: [['rusty_sword', .4], ['leather_vest', .4]], loreRewards: [{ id: 'cellar', clears: 1 }, { id: 'cellar_deep', clears: 3 }], unlock: null, hidden: false, traitReward: null },
+  { id: 'mine', emoji: '⛏️',    name: 'Abandoned Mine',   difficulty: 40, damage: 12,  duration: 20, gold: [18, 31],   xp: 35,  loot: [['oak_staff', .35], ['lucky_coin', .3]],   loreRewards: [{ id: 'mine', clears: 1 }], unlock: null, hidden: false, traitReward: null },
+  { id: 'crypt', emoji: '⚰️',   name: 'Crypt of Ash',     difficulty: 90, damage: 18,  duration: 40, gold: [42, 70], xp: 80,  loot: [['bone_mail', .35], ['crypt_signet', .15]], loreRewards: [{ id: 'crypt', clears: 1 }, { id: 'crypt_reading', clears: 1, requires: { class: 'cleric' } }], unlock: null, hidden: false, traitReward: null },
+  { id: 'spire', emoji: '🗼',   name: 'The Hollow Spire', difficulty: 200, damage: 21, duration: 80, gold: [105, 175], xp: 180, loot: [['moon_blade', .25]],                      loreRewards: [{ id: 'spire', clears: 1 }], unlock: null, hidden: false, traitReward: 'hungers_mark' },
 ];
 
 // Lore entries. hint = text shown while locked (default is generated from the unlock rule); secret:true shows ??? instead.
@@ -234,8 +238,13 @@ const CONFIG = {
   traitEvery: 10,           // every N levels an adventurer is offered a new trait (pick 1 of 3)
   rarityWeights: { common: 60, uncommon: 28, rare: 12 },   // trait roll odds; legendary (absent) never rolls
   statBarMax: 30,           // stat value that fills a stat bar on the roster card (display only)
-  statRerolls: 2,           // stat re-rolls allowed in the hire pop-up
-  oddsSims: 300,            // simulated runs used for the odds shown in the Dungeons panel
+  statRerolls: 2,
+  maxLevel: 10,              // level cap (XP stops; the milestone trait at traitEvery still applies)
+  maxClearChance: 0.95,      // best possible clear odds for ANY party: every room has a small irreducible 'freak accident' chance so no run is ever a sure thing
+  sellPerStatPoint: 4,       // item sale price = total stat bonus x this (or set value: n on an item)
+  sellConfirmFrom: 40,       // ask before selling items worth at least this much
+  maxSquads: 6,              // saved parties           // stat re-rolls allowed in the hire pop-up
+  oddsSims: 600,            // simulated runs used for the odds shown in the Dungeons panel
   lossXpFraction: 0.25,
   goldPerPresence: 0.01,    // +1% gold per point of party presence
   xpPerInsight: 0.01,       // +1% XP per point of party insight

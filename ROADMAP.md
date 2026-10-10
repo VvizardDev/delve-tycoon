@@ -22,10 +22,13 @@
 
 - Tile roster (tap to select, details pop-up), sorting, hiring as a pop-up, light theme palette (no toggle button for now; set CONFIG.theme), pop-ups open at the top
 
+- Saved parties, item selling, lower gold, 95% best-odds cap (per-room mishap), level cap 10, class name lists, stats+trait re-roll, pop-up X buttons, tile select/expand boxes, equipment bonuses in the dropdown, trait stat preview
+
 ## Planned (suggested order)
-0. **Roster follow-ups**: saved squads, restore-all, bulk release, hire comparison vs your current best
+0. **Roster follow-ups**: restore-all, bulk release, hire comparison vs your current best
 0b. **Server-driven class schedule** (Supabase clock + enforced hire)
-1. **Economy**: gold is still too easy; roster slots are now a sink; consider scaling hire/restore costs, item shop, dungeon currencies
+1. **Gameplay depth** (see chat): stances, scouting/intel, bonds and retiring at max level, dungeon modifiers, contracts
+1b. **Economy**: gold is still too easy; roster slots are now a sink; consider scaling hire/restore costs, item shop, dungeon currencies
 2. **Content**: write the real lore chains, extra dungeons with unlock rules, and more trait-reward dungeons (infrastructure exists)
 3. **Trait icons and rarity visuals** (needs art direction)
 5. **Real art**: draw the files listed by `artManifest()`; paper-doll layers later

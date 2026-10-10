@@ -165,3 +165,17 @@ h1{flex:0 0 auto;font-size:1.1rem;letter-spacing:.2em}
 #detail .card{border:0;padding:0;background:transparent}
 dialog{overscroll-behavior:contain}
 @media (max-width:720px){.tiles{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}}
+
+/* ===== v8: pop-up X, tile select box + expand box, previews, squads ===== */
+.dlg-x{position:sticky;top:0;float:right;z-index:5;min-width:40px;min-height:40px;width:40px;height:40px;padding:0;margin:-.4rem -.4rem .2rem .5rem;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:50%;font-size:1rem;letter-spacing:0}
+.selbox{position:absolute;top:6px;right:6px;z-index:2;width:24px;height:24px;display:grid;place-items:center;border:2px solid var(--accent);background:var(--topbg);color:var(--on-accent);font-size:.9rem;font-weight:700;border-radius:4px}
+.selbox.on{background:var(--accent)}
+.tile .expand{position:absolute;bottom:4px;right:4px;z-index:3;min-height:30px;min-width:30px;width:30px;height:30px;padding:0;border-radius:4px;background:var(--topbg);font-size:.8rem}
+.tinfo{padding-right:38px}
+.newdot{top:6px;right:36px}
+.pv{margin-left:.3rem;font-weight:700}
+.btnrow{display:flex;gap:.4rem}
+.traitoffer{display:flex;flex-direction:column;gap:.35rem;align-items:flex-start}
+.traitoffer button.sel{outline:2px solid var(--accent)}
+.squadchip{display:inline-flex;gap:2px;align-items:center}
+.xs-btn{min-width:28px;padding:0 .3rem}

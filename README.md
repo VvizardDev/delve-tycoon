@@ -45,6 +45,12 @@ Double-click `index.html`. No build step, no dependencies.
 - **Tiles**: a select box (top right) shows/toggles party membership; tapping the tile still toggles it; the ▸ box (bottom right) expands the details pop-up.
 - **Previews**: equipment dropdown entries list their bonus (e.g. `Rusty Sword (+3 ⚔️MIT)`); choosing one equips it immediately, as before. At a trait milestone, hovering (desktop) or tapping a trait previews it live on the stat line; *Take {trait}* confirms.
 
+## In-game pop-ups only (no browser dialogs)
+All confirmations and the squad-name prompt use the game's own pop-up (`ask()` + `renderAsk()` in game.js, `<dialog id="ask">`), never the browser's `confirm()` / `prompt()`. To add one: `ask({ text, onYes(value), yes: 'Label', input: 'default text' })` (omit `input` for a plain yes/no); the action continues in `onYes`. Wording is in `TERMS.phrases` (`confirmYes`, `confirmNo`, `saveName`, and each confirm phrase). Esc / ✕ / Cancel all cancel.
+
+## Details pop-up layout
+The adventurer details pop-up is a flat layout (header, traits, stats, loyalty, equipment) instead of a card inside a pop-up. **Release** sits in its own strip at the very bottom, away from the other buttons, with a note that gear returns to the Armory (`danger` strip in `rosterCard`). List-view cards no longer have a Release button; their footer has **Details**, which opens the same pop-up.
+
 ## Roster cap
 `rosterCap()` = `rosterCapStart` (4) + **bought slots** + optional free sources, up to `rosterCapMax` (12). Bought slots use the price list `CONFIG.rosterSlotCosts` (150, 300, 500, ... one entry per purchasable slot; the button is in the Tavern). Free sources, all **off (0)** for now: `rosterCapPerNewDungeon`, `rosterCapWinsPerSlot`, `rosterCapLevelsPerSlot` (the level one can shrink if adventurers leave). Existing adventurers are never removed if the cap drops; you just can't hire until under it.
 

@@ -24,6 +24,8 @@
 
 - Saved parties, item selling, lower gold, 95% best-odds cap (per-room mishap), level cap 10, class name lists, stats+trait re-roll, pop-up X buttons, tile select/expand boxes, equipment bonuses in the dropdown, trait stat preview
 
+- All confirmations in-game (no browser pop-ups), flat details pop-up with release in a separate strip
+
 ## Planned (suggested order)
 0. **Roster follow-ups**: restore-all, bulk release, hire comparison vs your current best
 0b. **Server-driven class schedule** (Supabase clock + enforced hire)

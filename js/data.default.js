@@ -31,6 +31,7 @@ const TERMS = {
     buySlot: `Buy slot ({cost}{goldIcon})`, logSlot: `{Roster} slot bought for {cost}{goldIcon} (now {cap}).`,
     classDays: `Available on: {days}`, classEvent: `Limited-time class.`, faceBtn: `Change face`,
     mishap: `<span class="lose">Disaster! A freak accident ends the run at the {room}: {name}.</span>`,
+    confirmYes: `Yes`, confirmNo: `Cancel`, saveName: `Save`, releaseNote: `Their gear returns to your {armory}.`,
     saveParty: `Save {party}`, squadPrompt: `Name this {party}:`, squadDefault: `{Party} {n}`, squadAway: `Some members are away`, deleteSquad: `Delete saved {party}`, confirmDeleteSquad: `Delete saved {party} "{name}"?`,
     sellBtn: `Sell {value}{goldIcon}`, logSold: `Sold {name} for {value}{goldIcon}.`, confirmSell: `Sell {name} for {value}{goldIcon}?`, confirmTrait: `Take {name}`, maxLevel: `MAX`,
     unlockLore: `Uncover: {title}`, unlockClears: `Clear {name} {n}×`,

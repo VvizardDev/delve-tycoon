@@ -179,3 +179,12 @@ dialog{overscroll-behavior:contain}
 .traitoffer button.sel{outline:2px solid var(--accent)}
 .squadchip{display:inline-flex;gap:2px;align-items:center}
 .xs-btn{min-width:28px;padding:0 .3rem}
+
+/* ===== v9: flat details layout, release strip, in-game ask pop-up ===== */
+.detail{display:flex;flex-direction:column;gap:.9rem}
+.detail .traits,.detail .stats,.detail .loyalty,.detail .slots{padding-top:.7rem;border-top:1px solid var(--line)}
+.detail .card-top{padding-bottom:.2rem}
+.danger{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin-top:.4rem;padding-top:.8rem;border-top:1px solid var(--line)}
+.danger-btn{color:var(--bad);border-color:var(--bad)}
+.asktext{font-size:1.1rem;margin:.2rem 0 1rem;max-width:30rem}
+#ask{max-width:min(420px,92vw)}

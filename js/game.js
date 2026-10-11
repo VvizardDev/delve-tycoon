@@ -36,7 +36,7 @@ function newState() {
 }
 let state = GameStorage.load() || newState();
 if (!state.reports) state.reports = [];   // older saves made before reports existed
-const ui = { party: [], tab: 'guild', detail: null, tavernOpen: false, preview: null };   // preview = { id, kind:'trait', trait } shown on the stat line before confirming a level-milestone trait   // UI-only (not saved): party = ticked adventurer ids, tab = current view   // UI-only: adventurer ids ticked for the next mission (not saved)
+const ui = { party: [], tab: 'guild', detail: null, tavernOpen: false, ask: null, preview: null };   // preview = { id, kind:'trait', trait } shown on the stat line before confirming a level-milestone trait   // UI-only (not saved): party = ticked adventurer ids, tab = current view   // UI-only: adventurer ids ticked for the next mission (not saved)
 
 /* ---------- 2. RULES (pure-ish helpers) ---------- */
 const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
@@ -291,10 +291,12 @@ const ACTIONS = {
     addLog(S('logPicked', { name: a.name, tname: TRAITS[el.dataset.trait].name }));
   },
   release(el) {   // dismiss an adventurer; equipped gear returns to the inventory
-    const a = byId(+el.dataset.id);
-    if (!a || isBusy(a.id) || !confirm(S('confirmRelease', { name: a.name }))) return;
-    Object.values(a.gear).filter(Boolean).forEach((i) => state.inventory.push(i));
-    state.roster = state.roster.filter((x) => x !== a); ui.party = ui.party.filter((i) => i !== a.id);
+    const a = byId(+el.dataset.id); if (!a || isBusy(a.id)) return;
+    ask({ text: S('confirmRelease', { name: a.name }), yes: Cap(T.release), onYes: () => {
+      const b = byId(a.id); if (!b || isBusy(b.id)) return;
+      Object.values(b.gear).filter(Boolean).forEach((i) => state.inventory.push(i));
+      state.roster = state.roster.filter((x) => x !== b); ui.party = ui.party.filter((i) => i !== b.id);
+    } });
   },
   buySlot() {   // buy the next roster slot (price list: CONFIG.rosterSlotCosts)
     const cost = nextSlotCost(); if (cost === null || state.gold < cost) return;
@@ -332,11 +334,14 @@ const ACTIONS = {
     if (!isUnlocked(d)) return;
     const ids = ui.party.filter((i) => byId(i) && !isBusy(i));
     if (!ids.length) return;
+    const go = () => {
+      const live = ids.filter((i) => byId(i) && !isBusy(i)); if (!live.length) return;
+      state.missions.push({ dungeonId: d.id, advIds: live, endsAt: Date.now() + d.duration * 1000 });
+      state.lastParty = live.slice();   // for the "last party" button
+      ui.party = [];
+    };
     const risky = ids.map(byId).filter((a) => a.loyalty <= 1 && maxLoyaltyOf(a) > 1);
-    if (risky.length && !confirm(S('confirmRisk', { names: risky.map((a) => a.name).join(', ') }))) return;
-    state.missions.push({ dungeonId: d.id, advIds: ids, endsAt: Date.now() + d.duration * 1000 });
-    state.lastParty = ids.slice();   // for the "last party" button
-    ui.party = [];
+    if (risky.length) ask({ text: S('confirmRisk', { names: risky.map((a) => a.name).join(', ') }), yes: Cap(T.send), onYes: go }); else go();
   },
   equip(el) {   // picking an item in the dropdown equips it immediately (the old item goes back to the Armory)
     const a = byId(+el.dataset.id), itemId = el.value;
@@ -348,20 +353,18 @@ const ACTIONS = {
   },
   previewTrait(el) { const p = ui.preview, id = +el.dataset.id; ui.preview = p && p.kind === 'trait' && p.id === id && p.trait === el.dataset.trait ? null : { id, kind: 'trait', trait: el.dataset.trait }; },
   sell(el) {
-    const id = el.dataset.item, i = state.inventory.indexOf(id); if (i < 0) return;
+    const id = el.dataset.item; if (!state.inventory.includes(id)) return;
     const value = sellValue(id);
-    if (value >= CONFIG.sellConfirmFrom && !confirm(S('confirmSell', { name: ITEMS[id].name, value }))) return;
-    state.inventory.splice(i, 1); state.gold += value; addLog(S('logSold', { name: ITEMS[id].name, value }));
+    const go = () => { const j = state.inventory.indexOf(id); if (j < 0) return; state.inventory.splice(j, 1); state.gold += value; addLog(S('logSold', { name: ITEMS[id].name, value })); };
+    if (value >= CONFIG.sellConfirmFrom) ask({ text: S('confirmSell', { name: ITEMS[id].name, value }), onYes: go }); else go();
   },
-  saveSquad() {   // save the currently ticked party as a named preset
+  saveSquad() {   // save the currently ticked party as a named preset (asks for a name in-game)
     const ids = ui.party.filter(byId), sq = (state.squads ||= []);
     if (!ids.length || sq.length >= CONFIG.maxSquads) return;
-    const raw = globalThis.prompt ? globalThis.prompt(S('squadPrompt'), S('squadDefault', { n: sq.length + 1 })) : S('squadDefault', { n: sq.length + 1 });
-    const name = cleanName(raw || '').slice(0, 16); if (!name) return;
-    sq.push({ name, ids: ids.slice() });
+    ask({ text: S('squadPrompt'), input: S('squadDefault', { n: sq.length + 1 }), yes: S('saveName'), onYes: (v) => { const name = cleanName(v || '').slice(0, 16); if (name && sq.length < CONFIG.maxSquads) sq.push({ name, ids: ids.slice() }); } });
   },
   useSquad(el) { const q = (state.squads || [])[+el.dataset.idx]; if (q) ui.party = q.ids.filter((i) => byId(i) && !isBusy(i)).slice(0, CONFIG.maxParty); },
-  deleteSquad(el) { const q = (state.squads || [])[+el.dataset.idx]; if (q && confirm(S('confirmDeleteSquad', { name: q.name }))) state.squads.splice(+el.dataset.idx, 1); },
+  deleteSquad(el) { const q = (state.squads || [])[+el.dataset.idx]; if (q) ask({ text: S('confirmDeleteSquad', { name: q.name }), onYes: () => { const k = state.squads.indexOf(q); if (k >= 0) state.squads.splice(k, 1); } }); },
   unequip(el) {
     const a = byId(+el.dataset.id), slot = el.dataset.slot;
     if (isBusy(a.id) || !a.gear[slot]) return;
@@ -373,7 +376,9 @@ const ACTIONS = {
     state.gold -= fee; a.loyalty++;
     addLog(S('logRestored', { name: a.name, cur: a.loyalty, max: maxLoyaltyOf(a), fee }));
   },
-  reset() { if (confirm(S('confirmReset'))) { GameStorage.clear(); state = newState(); ui.party = []; } },
+  reset() { ask({ text: S('confirmReset'), yes: Cap(T.resetSave), onYes: () => { GameStorage.clear(); state = newState(); ui.party = []; } }); },
+  askYes() { const q = ui.ask; if (!q) return; ui.ask = null; $('ask').close?.(); q.onYes(q.value); },
+  askNo() { ui.ask = null; $('ask').close?.(); },
 };
 // One click listener for the whole page; also handles <select> changes.
 function handle(e) {
@@ -387,10 +392,13 @@ document.addEventListener('change', handle);
 for (const [ev, on] of [['mouseover', true], ['focusin', true], ['mouseout', false], ['focusout', false]]) document.addEventListener(ev, (e) => { const b = e.target && e.target.closest ? e.target.closest('[data-action="previewTrait"]') : null; if (b) hoverTrait(+b.dataset.id, on ? b.dataset.trait : null); });   // live trait preview on desktop hover / keyboard focus
 // Name box in the hire pop-up: update the draft on every keystroke WITHOUT re-rendering (re-rendering would eat clicks).
 const cleanName = (s) => String(s).replace(/[<>&"']/g, '').trim().slice(0, 20);
-document.addEventListener('input', (e) => { if (e.target.dataset && e.target.dataset.draft === 'name' && state.draft) state.draft.name = cleanName(e.target.value); });
+document.addEventListener('input', (e) => { const t = e.target.dataset; if (t && t.draft === 'name' && state.draft) state.draft.name = cleanName(e.target.value); if (t && t.draft === 'ask' && ui.ask) ui.ask.value = cleanName(e.target.value); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && ui.ask && e.target.dataset && e.target.dataset.draft === 'ask') { ACTIONS.askYes(); GameStorage.save(state); render(); } });   // Enter confirms the name box
 
 /* ---------- 4. RENDERING (each panel = one function returning HTML) ---------- */
 const $ = (id) => document.getElementById(id);
+/* In-game replacement for the browser's confirm()/prompt(): ask({ text, onYes(value), yes?, no?, input?: defaultText }). Shown by renderAsk(). */
+const ask = (o) => { ui.ask = { yes: S('confirmYes'), no: S('confirmNo'), ...o, value: o.input ?? '' }; };
 const dlgX = (action) => `<button class="dlg-x" data-action="${action}" aria-label="${T.close}" title="${T.close}">✕</button>`;   // top-right close for pop-ups
 /* Open a pop-up scrolled to the TOP (browsers otherwise focus the last button and jump to the bottom on phones). */
 const showDlg = (d) => { if (d.open) return; d.showModal?.(); d.scrollTop = 0; globalThis.requestAnimationFrame?.(() => { d.scrollTop = 0; }); };
@@ -494,7 +502,10 @@ function rosterCard(a, inDialog = false) {
       ${cur ? `<span class="itemline">${icon('item', cur, SLOTS[slot].emoji, 'sm')}<b>${ITEMS[cur].name}</b></span><span class="dim">${fmt(ITEMS[cur].bonus)}</span><button class="ghost sm" data-action="unequip" data-id="${a.id}" data-slot="${slot}" ${busy ? 'disabled' : ''}>${S('remove')}</button>` : `<span class="dim">${S('empty')}</span>`}
       ${opts.length && !busy ? `<select data-action="equip" data-id="${a.id}" aria-label="${SLOTS[slot].name}"><option value="">${S('equipOpt')}</option>${opts.map((i) => `<option value="${i}">${ITEMS[i].name} (${fmt(ITEMS[i].bonus)})</option>`).join('')}</select>` : ''}</div>`;
   }).join('');
-  return `<article class="card ${busy ? 'away' : ''} ${picked ? 'picked' : ''}" data-adv="${a.id}">
+  const foot = inDialog
+    ? `<div class="danger"><button class="ghost sm danger-btn" data-action="release" data-id="${a.id}" ${busy ? 'disabled' : ''}>${Cap(T.release)}</button><span class="dim">${S('releaseNote')}</span></div>`
+    : `<div class="card-foot"><button class="ghost sm" data-action="openDetail" data-id="${a.id}">${S('details')}</button></div>`;
+  return `${inDialog ? `<div class="detail" data-adv="${a.id}">` : `<article class="card ${busy ? 'away' : ''} ${picked ? 'picked' : ''}" data-adv="${a.id}">`}
     <div class="card-top">${portraitHtml(a)}<div class="who"><div class="name">${a.name} ${tag}</div>
       <div class="dim">${clsName(a.cls)} · ${S('level', { n: a.level })} · ${S('addsHp', { n: hp })}${pvHp !== null && pvHp !== hp ? ` <span class="${pvHp > hp ? 'win' : 'lose'}">→ ${pvHp}</span>` : ''}</div>
       <div class="bar" title="${atMax ? S('maxLevel') : `${T.xp} ${a.xp}/${need}`}"><i style="width:${atMax ? 100 : (a.xp / need) * 100}%"></i></div></div>${tog}${pick}</div>
@@ -503,7 +514,7 @@ function rosterCard(a, inDialog = false) {
     <div class="loyalty ${risk ? 'warnpips' : ''}"><span class="dim">${Cap(T.loyalty)}</span> <span>${pips(a.loyalty, max)}</span>${risk ? `<span class="lose">${S('atRisk')}</span>` : ''}
       ${a.loyalty < max ? `<button class="ghost sm" data-action="restoreLoyalty" data-id="${a.id}" ${busy || state.gold < fee ? 'disabled' : ''}>${Cap(T.restore)} ${fee}${T.goldIcon}</button>` : ''}</div>
     <div class="slots">${slots}</div>
-    <div class="card-foot"><button class="ghost sm" data-action="release" data-id="${a.id}" ${busy ? 'disabled' : ''}>${Cap(T.release)}</button></div></article>`;
+    ${foot}${inDialog ? '</div>' : '</article>'}`;
 }
 
 /* Sorted copy of the roster per prefs (sort key + direction). Keys: hired, level, class, name, loyalty, hp, status, or any STATS id. */
@@ -539,10 +550,16 @@ function renderRoster() {
     : `<div class="tiles">${list.map(rosterTile).join('')}${n < cap ? `<button class="tile addtile" data-action="openTavern" aria-label="${S('hireTile')}">＋<span>${S('hireTile')}</span></button>` : ''}</div>`;
   return head('roster', title) + tools + `<p class="partybar">${bar}${sel.length && (state.squads || []).length < CONFIG.maxSquads ? ` <button class="ghost sm" data-action="saveSquad">${S('saveParty')}</button>` : ''}</p>` + body;
 }
+function renderAsk() {
+  const q = ui.ask, dlg = $('ask');
+  if (!q) { $('askBody').innerHTML = ''; if (dlg.open) dlg.close?.(); return; }
+  $('askBody').innerHTML = `${dlgX('askNo')}<p class="asktext" tabindex="-1" autofocus>${q.text}</p>${q.input !== undefined ? `<p><input type="text" data-draft="ask" maxlength="16" value="${q.value}"></p>` : ''}<p class="btnrow"><button data-action="askYes">${q.yes}</button><button class="ghost" data-action="askNo">${q.no}</button></p>`;
+  showDlg(dlg);
+}
 function renderDetail() {
   const a = ui.detail && byId(ui.detail), dlg = $('detail');
   if (!a) { ui.detail = null; $('detailBody').innerHTML = ''; if (dlg.open) dlg.close?.(); return; }
-  $('detailBody').innerHTML = dlgX('closeDetail') + rosterCard(a, true) + `<p><button class="ghost" data-action="closeDetail">${Cap(T.close)}</button></p>`;
+  $('detailBody').innerHTML = dlgX('closeDetail') + rosterCard(a, true);
   showDlg(dlg);
 }
 function renderDungeons() {
@@ -662,6 +679,7 @@ function render() {
   renderResult();
   renderTavernDlg();
   renderDetail();
+  renderAsk();
   document.querySelectorAll?.('.view')?.forEach((v) => { v.hidden = v.dataset.view !== ui.tab; });          // show only the current tab
   document.querySelectorAll?.('#nav button')?.forEach((b) => b.classList.toggle('active', b.dataset.tab === ui.tab));
 }
@@ -696,7 +714,8 @@ $('helpBody').innerHTML = renderHelp();
 $('draft').addEventListener?.('cancel', (e) => { e.preventDefault(); if (state.draft && state.draft.rerolls === CONFIG.statRerolls) { ACTIONS.closeDraft(); GameStorage.save(state); render(); } });   // Esc only works before a re-roll
 $('result').addEventListener?.('cancel', (e) => e.preventDefault());
 $('tavernDlg').addEventListener?.('close', () => { ui.tavernOpen = false; });
-$('detail').addEventListener?.('close', () => { ui.detail = null; });   // must click Continue
+$('detail').addEventListener?.('close', () => { ui.detail = null; });
+$('ask').addEventListener?.('close', () => { ui.ask = null; });   // must click Continue
 $('draft').addEventListener?.('close', () => { if (state.draft) showDlg($('draft')); });
 // A saved draft that can no longer be afforded (or roster full) is dropped so the player is never stuck.
 if (state.draft && (!CLASSES[state.draft.cls] || state.gold < CLASSES[state.draft.cls].cost || state.roster.length >= rosterCap())) state.draft = null;
